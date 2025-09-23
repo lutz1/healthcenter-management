@@ -1,24 +1,36 @@
 // src/pages/Staff.jsx
 import React, { useState, useEffect } from "react";
 import {
-  Typography, Box, Button, TextField, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Paper, IconButton,
-  Dialog, DialogTitle, DialogContent, DialogActions, MenuItem
+  Typography,
+  Box,
+  Button,
+  TextField,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  MenuItem
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
 
-import { db } from "../modules/firebase/firebase";
+import { db, app } from "../modules/firebase/firebase"; // ✅ named import
 import { collection, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import app from "../modules/firebase/firebase"; // your firebase config
 
 export default function Staff() {
   const { role: currentUserRole } = useAuth();
-
-  const functions = getFunctions(app);
+  const functions = getFunctions(app); // Cloud Functions
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userList, setUserList] = useState([]);
@@ -257,7 +269,6 @@ export default function Staff() {
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
-
               <TextField
                 select
                 label="Role"
@@ -269,7 +280,6 @@ export default function Staff() {
                 {currentUserRole === "superadmin" && <MenuItem value="admin">Admin</MenuItem>}
                 <MenuItem value="staff">Staff</MenuItem>
               </TextField>
-
               {!editId && (
                 <TextField
                   label="Password"
