@@ -13,11 +13,13 @@ const firebaseConfig = {
   appId: process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
-export const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 
 // ✅ Export these for use everywhere
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 // ✅ Cloud Functions (this automatically attaches the ID token of the logged-in user)
-export const functions = getFunctions(app, "us-central1");
+const functions = getFunctions(app, "us-central1");
+
+export { db, auth, functions };

@@ -6,13 +6,14 @@ admin.initializeApp();
 
 exports.createUser = functions.https.onCall(async (data, context) => {
   // ✅ Check if user is authenticated
+
+  console.log("context.auth:", context.auth);
   if (!context.auth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
       "You must be logged in to create a user."
     );
   }
-    console.log("context.auth:", context.auth);
   // ✅ Fetch user role from Firestore
   const userDoc = await admin.firestore().collection("users").doc(context.auth.uid).get();
   const currentUserRole = userDoc.exists ? userDoc.data().role : null;

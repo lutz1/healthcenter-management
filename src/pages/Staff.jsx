@@ -104,7 +104,7 @@ export default function Staff() {
       } else {
         // ✅ Call secure Cloud Function with auth
         const auth = getAuth();
-        console.log("Current Auth User:", auth.currentUser?.email); // 👀 Debug log
+       console.log("Auth user at save:", auth.currentUser); // 👀 Debug log
 
         if (!auth.currentUser) {
           throw new Error("Not logged in.");
