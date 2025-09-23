@@ -10,18 +10,15 @@ import { motion } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
 
 import { db } from "../modules/firebase/firebase";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc
-} from "firebase/firestore";
+import { collection, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import app from "../modules/firebase/firebase"; // your firebase config
 
 export default function Staff() {
   const { role: currentUserRole } = useAuth();
+
+  const functions = getFunctions(app);
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userList, setUserList] = useState([]);
@@ -40,26 +37,22 @@ export default function Staff() {
   const [editId, setEditId] = useState(null);
   const [roleFilter, setRoleFilter] = useState("all");
 
-  // 🔹 Fetch users from Firestore
+  // Fetch users from Firestore
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const snapshot = await getDocs(collection(db, "users"));
         let data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-
-        // exclude superadmins from table
-        data = data.filter((u) => u.role !== "superadmin");
-
+        data = data.filter((u) => u.role !== "superadmin"); // exclude superadmins
         setUserList(data);
       } catch (err) {
         console.error("Error fetching users:", err);
       }
     };
-
     fetchUsers();
   }, []);
 
-  // 🔹 Filter users by search and role
+  // Filter users by search and role
   const filteredUsers = userList
     .filter((u) => roleFilter === "all" || u.role === roleFilter)
     .filter(
@@ -92,17 +85,20 @@ export default function Staff() {
 
   const handleCloseDialog = () => setOpenDialog(false);
 
-  // 🔹 Save (Create/Update) user
+  // Save (Create/Update) user
   const handleSave = async () => {
     try {
       if (editId) {
+        // Update Firestore only
         await updateDoc(doc(db, "users", editId), formData);
-        setUserList(
-          userList.map((u) => (u.id === editId ? { ...u, ...formData } : u))
-        );
+        setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
       } else {
-        const docRef = await addDoc(collection(db, "users"), formData);
-        setUserList([...userList, { id: docRef.id, ...formData }]);
+        // Create user via Cloud Function (Firestore + Auth)
+        const createUser = httpsCallable(functions, "createUser");
+        const { data } = await createUser(formData);
+
+        // Add to local state
+        setUserList([...userList, { id: data.uid, ...formData }]);
       }
       handleCloseDialog();
     } catch (err) {
@@ -194,16 +190,10 @@ export default function Staff() {
                     <TableCell>{user.address}</TableCell>
                     <TableCell>{user.role}</TableCell>
                     <TableCell>
-                      <IconButton
-                        color="primary"
-                        onClick={() => handleOpenDialog(user)}
-                      >
+                      <IconButton color="primary" onClick={() => handleOpenDialog(user)}>
                         <Edit />
                       </IconButton>
-                      <IconButton
-                        color="error"
-                        onClick={() => handleDelete(user.id)}
-                      >
+                      <IconButton color="error" onClick={() => handleDelete(user.id)}>
                         <Delete />
                       </IconButton>
                     </TableCell>
@@ -228,36 +218,28 @@ export default function Staff() {
                 fullWidth
                 margin="dense"
                 value={formData.firstName}
-                onChange={(e) =>
-                  setFormData({ ...formData, firstName: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
               />
               <TextField
                 label="Last Name"
                 fullWidth
                 margin="dense"
                 value={formData.lastName}
-                onChange={(e) =>
-                  setFormData({ ...formData, lastName: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
               />
               <TextField
                 label="Email"
                 fullWidth
                 margin="dense"
                 value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
               <TextField
                 label="Phone"
                 fullWidth
                 margin="dense"
                 value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               />
               <TextField
                 label="Birthdate"
@@ -266,34 +248,25 @@ export default function Staff() {
                 margin="dense"
                 InputLabelProps={{ shrink: true }}
                 value={formData.birthdate}
-                onChange={(e) =>
-                  setFormData({ ...formData, birthdate: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
               />
               <TextField
                 label="Address"
                 fullWidth
                 margin="dense"
                 value={formData.address}
-                onChange={(e) =>
-                  setFormData({ ...formData, address: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
 
-              {/* Role selection depends on current user's role */}
               <TextField
                 select
                 label="Role"
                 fullWidth
                 margin="dense"
                 value={formData.role}
-                onChange={(e) =>
-                  setFormData({ ...formData, role: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               >
-                {currentUserRole === "superadmin" && (
-                  <MenuItem value="admin">Admin</MenuItem>
-                )}
+                {currentUserRole === "superadmin" && <MenuItem value="admin">Admin</MenuItem>}
                 <MenuItem value="staff">Staff</MenuItem>
               </TextField>
 
@@ -304,9 +277,7 @@ export default function Staff() {
                   fullWidth
                   margin="dense"
                   value={formData.password || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 />
               )}
             </DialogContent>
