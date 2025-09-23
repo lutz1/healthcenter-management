@@ -20,4 +20,4 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 
 // ✅ Cloud Functions (this automatically attaches the ID token of the logged-in user)
-export const functions = getFunctions(app);
+export const functions = getFunctions(app, "us-central1");
