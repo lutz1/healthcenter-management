@@ -9,10 +9,11 @@ import { Edit, Delete } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
 
-import { db, functions } from "../modules/firebase/firebase"; // ✅ use exported functions
+import { db } from "../modules/firebase/firebase";
 import { collection, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { httpsCallable } from "firebase/functions";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { getAuth } from "firebase/auth";
 
 export default function Staff() {
   const { role: currentUserRole, user: authUser, loading } = useAuth();
@@ -49,7 +50,7 @@ export default function Staff() {
     fetchUsers();
   }, []);
 
-  // 🔹 Filter users
+  // 🔹 Filter users by search and role
   const filteredUsers = userList
     .filter((u) => roleFilter === "all" || u.role === roleFilter)
     .filter(
@@ -100,8 +101,17 @@ export default function Staff() {
         await updateDoc(doc(db, "users", editId), formData);
         setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
       } else {
-        // ✅ Call secure Cloud Function
+        // ✅ Call secure Cloud Function with auth
+        const auth = getAuth();
+        console.log("Current Auth User:", auth.currentUser?.email); // 👀 Debug log
+
+        if (!auth.currentUser) {
+          throw new Error("Not logged in.");
+        }
+
+        const functions = getFunctions(); // use default app
         const createUser = httpsCallable(functions, "createUser");
+
         const { data } = await createUser(formData);
         setUserList([...userList, { id: data.uid, ...data }]);
       }
@@ -123,6 +133,7 @@ export default function Staff() {
     }
   };
 
+  // 🔹 Show loading state until AuthContext is ready
   if (loading) {
     return (
       <DashboardLayout title="User Management" open={sidebarOpen} setOpen={setSidebarOpen}>

@@ -46,7 +46,7 @@ export default function Login() {
       if (userDoc.exists()) {
         const userData = userDoc.data();
         const role = userData.role;
-
+console.log("Logged in as:", user.email, "with role:", role);
         // 3. Redirect based on role
         if (role === "superadmin") navigate("/superadmin");
         else if (role === "admin") navigate("/admin");
