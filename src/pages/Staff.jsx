@@ -9,14 +9,14 @@ import { Edit, Delete } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
 
-import { db, app, auth } from "../modules/firebase/firebase";
+import { db } from "../modules/firebase/firebase";
 import { collection, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { getAuth } from "firebase/auth";
 
 export default function Staff() {
-  const { role: currentUserRole, user: authUser, loading } = useAuth(); 
-  const functions = getFunctions(app);
+  const { role: currentUserRole, user: authUser, loading } = useAuth();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userList, setUserList] = useState([]);
@@ -41,7 +41,7 @@ export default function Staff() {
       try {
         const snapshot = await getDocs(collection(db, "users"));
         let data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        data = data.filter((u) => u.role !== "superadmin"); // exclude superadmins from table
+        data = data.filter((u) => u.role !== "superadmin"); // exclude superadmins
         setUserList(data);
       } catch (err) {
         console.error("Error fetching users:", err);
@@ -90,12 +90,10 @@ export default function Staff() {
       return;
     }
 
-    if (!authUser) {
-      alert("❌ You must be logged in.");
+    if (!authUser || (currentUserRole !== "superadmin" && currentUserRole !== "admin")) {
+      alert("❌ You must be logged in as Superadmin/Admin to create users.");
       return;
     }
-
-    console.log("Current Auth User:", auth.currentUser?.email);
 
     try {
       if (editId) {
@@ -103,8 +101,18 @@ export default function Staff() {
         await updateDoc(doc(db, "users", editId), formData);
         setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
       } else {
-        // Call Cloud Function securely
+        // ✅ Call secure Cloud Function with auth
+        const auth = getAuth();
+        console.log("Current Auth User:", auth.currentUser?.email); // 👀 Debug log
+
+        if (!auth.currentUser) {
+          throw new Error("Not logged in.");
+        }
+
+        // ✅ Force Cloud Functions to use `us-central1`
+        const functions = getFunctions(undefined, "us-central1");
         const createUser = httpsCallable(functions, "createUser");
+
         const { data } = await createUser(formData);
         setUserList([...userList, { id: data.uid, ...data }]);
       }
@@ -126,6 +134,7 @@ export default function Staff() {
     }
   };
 
+  // 🔹 Show loading state until AuthContext is ready
   if (loading) {
     return (
       <DashboardLayout title="User Management" open={sidebarOpen} setOpen={setSidebarOpen}>
@@ -142,7 +151,15 @@ export default function Staff() {
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
-        <Box p={3}>
+        <Box
+          p={3}
+          sx={{
+            backdropFilter: "blur(12px)",
+            backgroundColor: "rgba(255,255,255,0.1)",
+            borderRadius: 3,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+          }}
+        >
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
             <Typography variant="h4">User Management</Typography>
             {(currentUserRole === "superadmin" || currentUserRole === "admin") && (
@@ -175,7 +192,6 @@ export default function Staff() {
             </TextField>
           </Box>
 
-          {/* Table */}
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
@@ -212,38 +228,63 @@ export default function Staff() {
                 ))}
                 {filteredUsers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} align="center">No users found</TableCell>
+                    <TableCell colSpan={8} align="center">
+                      No users found
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
           </TableContainer>
 
-          {/* Dialog */}
           <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="sm">
             <DialogTitle>{editId ? "Edit User" : "Create User"}</DialogTitle>
             <DialogContent>
-              <TextField label="First Name" fullWidth margin="dense"
+              <TextField
+                label="First Name"
+                fullWidth
+                margin="dense"
                 value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} />
-              <TextField label="Last Name" fullWidth margin="dense"
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+              />
+              <TextField
+                label="Last Name"
+                fullWidth
+                margin="dense"
                 value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} />
-              <TextField label="Email" fullWidth margin="dense"
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+              />
+              <TextField
+                label="Email"
+                fullWidth
+                margin="dense"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-              <TextField label="Phone" fullWidth margin="dense"
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+              <TextField
+                label="Phone"
+                fullWidth
+                margin="dense"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
-              <TextField label="Birthdate" type="date" fullWidth margin="dense"
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
+              <TextField
+                label="Birthdate"
+                type="date"
+                fullWidth
+                margin="dense"
                 InputLabelProps={{ shrink: true }}
                 value={formData.birthdate}
-                onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })} />
-              <TextField label="Address" fullWidth margin="dense"
+                onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
+              />
+              <TextField
+                label="Address"
+                fullWidth
+                margin="dense"
                 value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              />
 
-              {/* Role dropdown - restrict by currentUserRole */}
               <TextField
                 select
                 label="Role"
@@ -253,9 +294,7 @@ export default function Staff() {
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               >
                 {currentUserRole === "superadmin" && <MenuItem value="admin">Admin</MenuItem>}
-                {(currentUserRole === "superadmin" || currentUserRole === "admin") && (
-                  <MenuItem value="staff">Staff</MenuItem>
-                )}
+                <MenuItem value="staff">Staff</MenuItem>
               </TextField>
 
               {!editId && (

@@ -1,16 +1,11 @@
+// functions/index.js
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
 admin.initializeApp();
-const db = admin.firestore();
 
-/**
- * Cloud Function: createUser
- * Superadmin → can create admin & staff
- * Admin → can create staff
- * Staff → cannot create
- */
 exports.createUser = functions.https.onCall(async (data, context) => {
+  // ✅ Check if user is authenticated
   if (!context.auth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -18,58 +13,39 @@ exports.createUser = functions.https.onCall(async (data, context) => {
     );
   }
 
-  // Get caller's Firestore role
-  const callerDoc = await db.collection("users").doc(context.auth.uid).get();
-  const callerRole = callerDoc.data()?.role;
+  // ✅ Fetch user role from Firestore
+  const userDoc = await admin.firestore().collection("users").doc(context.auth.uid).get();
+  const currentUserRole = userDoc.exists ? userDoc.data().role : null;
 
-  if (!callerRole) {
-    throw new functions.https.HttpsError("permission-denied", "Role not found.");
-  }
-
-  // ✅ Role checks
-  if (callerRole === "superadmin") {
-    if (!["admin", "staff"].includes(data.role)) {
-      throw new functions.https.HttpsError("permission-denied", "Superadmin can only create admin or staff.");
-    }
-  } else if (callerRole === "admin") {
-    if (data.role !== "staff") {
-      throw new functions.https.HttpsError("permission-denied", "Admin can only create staff.");
-    }
-  } else {
-    throw new functions.https.HttpsError("permission-denied", "You are not allowed to create users.");
-  }
-
-  const { firstName, lastName, email, phone, birthdate, address, password, role } = data;
-
-  if (!email || !password || !role) {
-    throw new functions.https.HttpsError("invalid-argument", "Email, password, and role are required.");
+  if (currentUserRole !== "superadmin" && currentUserRole !== "admin") {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only admins or superadmins can create users."
+    );
   }
 
   try {
-    // 🔹 Create Firebase Auth user
+    // ✅ Create user in Firebase Authentication
     const userRecord = await admin.auth().createUser({
-      email,
-      password,
-      displayName: `${firstName} ${lastName}`,
+      email: data.email,
+      password: data.password,
+      displayName: `${data.firstName} ${data.lastName}`,
     });
 
-    // 🔹 Save in Firestore
-    const userData = {
-      firstName,
-      lastName,
-      email,
-      phone: phone || "",
-      birthdate: birthdate || "",
-      address: address || "",
-      role,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    };
+    // ✅ Save to Firestore
+    await admin.firestore().collection("users").doc(userRecord.uid).set({
+      uid: userRecord.uid,
+      email: data.email,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      phone: data.phone,
+      birthdate: data.birthdate,
+      address: data.address,
+      role: data.role || "staff", // default staff
+    });
 
-    await db.collection("users").doc(userRecord.uid).set(userData);
-
-    return { uid: userRecord.uid, ...userData };
+    return { uid: userRecord.uid, email: data.email, role: data.role };
   } catch (error) {
-    console.error("Error creating user:", error);
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
