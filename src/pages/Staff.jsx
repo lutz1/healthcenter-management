@@ -9,10 +9,10 @@ import { Edit, Delete } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
 
-import { db } from "../modules/firebase/firebase";
+import { db, functions } from "../modules/firebase/firebase";
 import { collection, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { getAuth } from "firebase/auth";
+import { httpsCallable } from "firebase/functions";
 
 export default function Staff() {
   const { role: currentUserRole, user: authUser, loading } = useAuth();
@@ -34,7 +34,7 @@ export default function Staff() {
   const [editId, setEditId] = useState(null);
   const [roleFilter, setRoleFilter] = useState("all");
 
-  // 🔹 Fetch users from Firestore
+  // Fetch users from Firestore
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -49,7 +49,7 @@ export default function Staff() {
     fetchUsers();
   }, []);
 
-  // 🔹 Filter users by search and role
+  // Filter users by search and role
   const filteredUsers = userList
     .filter((u) => roleFilter === "all" || u.role === roleFilter)
     .filter(
@@ -82,7 +82,7 @@ export default function Staff() {
 
   const handleCloseDialog = () => setOpenDialog(false);
 
-  // 🔹 Save (Create/Update) user
+  // Save (Create/Update) user
   const handleSave = async () => {
     if (loading) {
       alert("⏳ Still loading authentication. Please wait.");
@@ -100,38 +100,16 @@ export default function Staff() {
         await updateDoc(doc(db, "users", editId), formData);
         setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
       } else {
-        // 🔹 HTTP request to Cloud Function
-        const auth = getAuth();
-        const currentUser = auth.currentUser;
+        // ✅ Call secure Cloud Function
+        const createUser = httpsCallable(functions, "createUser");
 
-        if (!currentUser) {
-          throw new Error("Not logged in.");
-        }
+        console.log("Sending data to createUser:", formData);
 
-        // Get Firebase ID token
-        const token = await currentUser.getIdToken();
+        const result = await createUser(formData); // passes auth automatically
+        const data = result.data;
 
-        const response = await fetch(
-          "https://us-central1-healthcenter-61826.cloudfunctions.net/createUser",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(formData),
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to create user");
-        }
-
-        const data = await response.json();
         setUserList([...userList, { id: data.uid, ...data }]);
       }
-
       handleCloseDialog();
     } catch (err) {
       console.error("Error saving user:", err);
@@ -150,6 +128,7 @@ export default function Staff() {
     }
   };
 
+  // Show loading state until AuthContext is ready
   if (loading) {
     return (
       <DashboardLayout title="User Management" open={sidebarOpen} setOpen={setSidebarOpen}>
