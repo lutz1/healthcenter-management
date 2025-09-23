@@ -12,7 +12,7 @@ exports.createUser = functions.https.onCall(async (data, context) => {
       "You must be logged in to create a user."
     );
   }
-
+    console.log("context.auth:", context.auth);
   // ✅ Fetch user role from Firestore
   const userDoc = await admin.firestore().collection("users").doc(context.auth.uid).get();
   const currentUserRole = userDoc.exists ? userDoc.data().role : null;
@@ -27,6 +27,7 @@ exports.createUser = functions.https.onCall(async (data, context) => {
   try {
     // ✅ Create user in Firebase Authentication
     const userRecord = await admin.auth().createUser({
+      
       email: data.email,
       password: data.password,
       displayName: `${data.firstName} ${data.lastName}`,

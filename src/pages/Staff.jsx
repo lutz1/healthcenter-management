@@ -9,11 +9,12 @@ import { Edit, Delete } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
 
-import { db } from "../modules/firebase/firebase";
+import { db, functions} from "../modules/firebase/firebase";
 import { collection, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
 import { getAuth } from "firebase/auth";
+
 
 export default function Staff() {
   const { role: currentUserRole, user: authUser, loading } = useAuth();
@@ -110,10 +111,10 @@ export default function Staff() {
         }
 
         // ✅ Force Cloud Functions to use `us-central1`
-        const functions = getFunctions(undefined, "us-central1");
         const createUser = httpsCallable(functions, "createUser");
 
         const { data } = await createUser(formData);
+        
         setUserList([...userList, { id: data.uid, ...data }]);
       }
       handleCloseDialog();
