@@ -1,16 +1,10 @@
-// functions/index.js
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
 admin.initializeApp();
 const db = admin.firestore();
 
-/**
- * Cloud Function: createUser
- * Creates a user in Firebase Authentication and Firestore.
- */
 exports.createUser = functions.https.onCall(async (data, context) => {
-  // Optional: restrict only Superadmins can call this function
   if (!context.auth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -35,7 +29,6 @@ exports.createUser = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    // 1️⃣ Create user in Firebase Auth
     const userRecord = await admin.auth().createUser({
       email,
       password,
@@ -53,7 +46,6 @@ exports.createUser = functions.https.onCall(async (data, context) => {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    // 2️⃣ Save user in Firestore
     await db.collection("users").doc(userRecord.uid).set(userData);
 
     return { uid: userRecord.uid, ...userData };

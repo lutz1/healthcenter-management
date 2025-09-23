@@ -1,4 +1,3 @@
-// src/context/AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { auth, db } from "../modules/firebase/firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -7,8 +6,8 @@ import { doc, getDoc } from "firebase/firestore";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // Firebase Auth user
-  const [role, setRole] = useState(null); // User role from Firestore
+  const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

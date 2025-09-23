@@ -1,36 +1,21 @@
 // src/pages/Staff.jsx
 import React, { useState, useEffect } from "react";
 import {
-  Typography,
-  Box,
-  Button,
-  TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  MenuItem
+  Typography, Box, Button, TextField, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, Paper, IconButton,
+  Dialog, DialogTitle, DialogContent, DialogActions, MenuItem
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
 
-import { db, app } from "../modules/firebase/firebase"; // ✅ named import
+import { db, functions } from "../modules/firebase/firebase"; // ✅ use exported functions
 import { collection, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
 
 export default function Staff() {
-  const { role: currentUserRole } = useAuth();
-  const functions = getFunctions(app); // Cloud Functions
+  const { role: currentUserRole, user: authUser, loading } = useAuth();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userList, setUserList] = useState([]);
@@ -49,7 +34,7 @@ export default function Staff() {
   const [editId, setEditId] = useState(null);
   const [roleFilter, setRoleFilter] = useState("all");
 
-  // Fetch users from Firestore
+  // 🔹 Fetch users from Firestore
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -64,7 +49,7 @@ export default function Staff() {
     fetchUsers();
   }, []);
 
-  // Filter users by search and role
+  // 🔹 Filter users
   const filteredUsers = userList
     .filter((u) => roleFilter === "all" || u.role === roleFilter)
     .filter(
@@ -97,20 +82,28 @@ export default function Staff() {
 
   const handleCloseDialog = () => setOpenDialog(false);
 
-  // Save (Create/Update) user
+  // 🔹 Save (Create/Update) user
   const handleSave = async () => {
+    if (loading) {
+      alert("⏳ Still loading authentication. Please wait.");
+      return;
+    }
+
+    if (!authUser || currentUserRole !== "superadmin") {
+      alert("❌ You must be logged in as Superadmin to create users.");
+      return;
+    }
+
     try {
       if (editId) {
-        // Update Firestore only
+        // Update Firestore
         await updateDoc(doc(db, "users", editId), formData);
         setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
       } else {
-        // Create user via Cloud Function (Firestore + Auth)
+        // ✅ Call secure Cloud Function
         const createUser = httpsCallable(functions, "createUser");
         const { data } = await createUser(formData);
-
-        // Add to local state
-        setUserList([...userList, { id: data.uid, ...formData }]);
+        setUserList([...userList, { id: data.uid, ...data }]);
       }
       handleCloseDialog();
     } catch (err) {
@@ -129,6 +122,14 @@ export default function Staff() {
       alert("Error: " + err.message);
     }
   };
+
+  if (loading) {
+    return (
+      <DashboardLayout title="User Management" open={sidebarOpen} setOpen={setSidebarOpen}>
+        <Box p={3}><Typography>Loading authentication...</Typography></Box>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout title="User Management" open={sidebarOpen} setOpen={setSidebarOpen}>
@@ -149,11 +150,13 @@ export default function Staff() {
         >
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
             <Typography variant="h4">User Management</Typography>
-            <motion.div whileHover={{ scale: 1.05 }}>
-              <Button variant="contained" color="primary" onClick={() => handleOpenDialog()}>
-                + Create User
-              </Button>
-            </motion.div>
+            {currentUserRole === "superadmin" && (
+              <motion.div whileHover={{ scale: 1.05 }}>
+                <Button variant="contained" color="primary" onClick={() => handleOpenDialog()}>
+                  + Create User
+                </Button>
+              </motion.div>
+            )}
           </Box>
 
           <Box display="flex" gap={2} mb={2}>
@@ -269,6 +272,7 @@ export default function Staff() {
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
+
               <TextField
                 select
                 label="Role"
@@ -280,6 +284,7 @@ export default function Staff() {
                 {currentUserRole === "superadmin" && <MenuItem value="admin">Admin</MenuItem>}
                 <MenuItem value="staff">Staff</MenuItem>
               </TextField>
+
               {!editId && (
                 <TextField
                   label="Password"
