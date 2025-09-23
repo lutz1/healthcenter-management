@@ -8,7 +8,7 @@ import theme from "./theme";
 import SuperAdminDashboard from "./modules/SuperAdminDashboard";
 import AdminDashboard from "./modules/AdminDashboard";
 import StaffDashboard from "./modules/StaffDashboard";
-import Login from "./modules/Login";
+import Login from "./modules/Login"; // <-- ✅ Import Login
 
 // SuperAdmin Pages
 import Staff from "./pages/Staff";
@@ -21,45 +21,174 @@ import LogsHistory from "./pages/LogsHistory";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 
+// Auth Context
+import { AuthProvider, useAuth } from "./context/AuthContext";
+
+// ---------- ProtectedRoute Component ----------
+const ProtectedRoute = ({ children, requiredRole }) => {
+  const { user, role, loading } = useAuth();
+
+  if (loading) return <div style={{ textAlign: "center", marginTop: "50px" }}>Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />; // <-- ✅ go to /login if not logged in
+  if (requiredRole && role !== requiredRole) return <Navigate to="/login" replace />;
+
+  return children;
+};
+
+// ---------- AutoRedirect Component ----------
+const AutoRedirect = () => {
+  const { user, role, loading } = useAuth();
+
+  if (loading) return <div style={{ textAlign: "center", marginTop: "50px" }}>Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />; // <-- ✅ go to /login instead of /
+
+  switch (role) {
+    case "superadmin":
+      return <Navigate to="/superadmin" replace />;
+    case "admin":
+      return <Navigate to="/admin" replace />;
+    case "staff":
+      return <Navigate to="/staff" replace />;
+    default:
+      return <Navigate to="/login" replace />;
+  }
+};
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
-      <BrowserRouter>
-        <Routes>
-          {/* Default login page */}
-          <Route path="/" element={<Login />} />
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public route */}
+            <Route path="/login" element={<Login />} />
 
-          {/* SuperAdmin routes */}
-          <Route path="/superadmin" element={<SuperAdminDashboard />} />
-          <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />
+            {/* AutoRedirect on root */}
+            <Route path="/" element={<AutoRedirect />} />
 
-          {/* Management */}
-          <Route path="/management/staff" element={<Staff />} />
-          <Route path="/management/patients" element={<Patients />} />
-          <Route path="/management/events" element={<Events />} />
+            {/* SuperAdmin routes */}
+            <Route
+              path="/superadmin"
+              element={
+                <ProtectedRoute requiredRole="superadmin">
+                  <SuperAdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/superadmin/dashboard"
+              element={
+                <ProtectedRoute requiredRole="superadmin">
+                  <SuperAdminDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Records & Data */}
-          <Route path="/records/medical-records" element={<MedicalRecords />} />
-          <Route path="/records/services" element={<Services />} />
-          <Route path="/records/inventory" element={<Inventory />} />
-          <Route path="/records/logs-history" element={<LogsHistory />} />
+            {/* Management */}
+            <Route
+              path="/management/staff"
+              element={
+                <ProtectedRoute requiredRole="superadmin">
+                  <Staff />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/management/patients"
+              element={
+                <ProtectedRoute requiredRole="superadmin">
+                  <Patients />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/management/events"
+              element={
+                <ProtectedRoute requiredRole="superadmin">
+                  <Events />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Analytics */}
-          <Route path="/analytics/reports" element={<Reports />} />
+            {/* Records & Data */}
+            <Route
+              path="/records/medical-records"
+              element={
+                <ProtectedRoute requiredRole="superadmin">
+                  <MedicalRecords />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/records/services"
+              element={
+                <ProtectedRoute requiredRole="superadmin">
+                  <Services />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/records/inventory"
+              element={
+                <ProtectedRoute requiredRole="superadmin">
+                  <Inventory />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/records/logs-history"
+              element={
+                <ProtectedRoute requiredRole="superadmin">
+                  <LogsHistory />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Settings */}
-          <Route path="/settings" element={<Settings />} />
+            {/* Analytics */}
+            <Route
+              path="/analytics/reports"
+              element={
+                <ProtectedRoute requiredRole="superadmin">
+                  <Reports />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Admin routes */}
-          <Route path="/admin" element={<AdminDashboard />} />
+            {/* Settings */}
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute requiredRole="superadmin">
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Staff routes */}
-          <Route path="/staff" element={<StaffDashboard />} />
+            {/* Admin routes */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Redirect unknown routes to login */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </BrowserRouter>
+            {/* Staff routes */}
+            <Route
+              path="/staff"
+              element={
+                <ProtectedRoute requiredRole="staff">
+                  <StaffDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Catch-all */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

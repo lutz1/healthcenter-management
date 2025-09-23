@@ -1,4 +1,4 @@
-// SuperAdminDashboard.jsx
+// src/modules/SuperAdminDashboard.jsx
 import React, { useEffect, useState } from "react";
 import {
   Grid,
@@ -9,8 +9,14 @@ import {
   List,
   ListItem,
   ListItemText,
+  CircularProgress,
 } from "@mui/material";
-import DashboardLayout from "../layouts/DashboardLayout";
+import { useNavigate } from "react-router-dom";
+import { auth, db } from "../modules/firebase/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+
+// Icons
 import GroupIcon from "@mui/icons-material/Group";
 import PeopleIcon from "@mui/icons-material/People";
 import AssignmentIcon from "@mui/icons-material/Assignment";
@@ -18,8 +24,11 @@ import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import SecurityIcon from "@mui/icons-material/Security";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
+// Layout
+import DashboardLayout from "../layouts/DashboardLayout";
+
 const glassStyle = {
-  background: "rgba(255, 255, 255, 0.67)", // frosted glass
+  background: "rgba(255, 255, 255, 0.67)",
   backdropFilter: "blur(12px)",
   WebkitBackdropFilter: "blur(12px)",
   border: "1px solid rgba(255, 255, 255, 0.3)",
@@ -28,6 +37,50 @@ const glassStyle = {
 };
 
 export default function SuperAdminDashboard() {
+  const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  // Real-time clock
+  const [time, setTime] = useState(new Date());
+  useEffect(() => {
+    const interval = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Check auth & fetch Firestore user
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        navigate("/"); // not logged in
+        return;
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (!userDoc.exists() || userDoc.data().role !== "superadmin") {
+          navigate("/"); // not superadmin
+          return;
+        }
+        setUsername(userDoc.data().name || "Super Admin");
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching user:", err);
+        navigate("/"); // redirect on error
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
+
+  if (loading)
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <CircularProgress />
+      </Box>
+    );
+
+  // Dashboard Data
   const menuItems = [
     { text: "Staff Overview", icon: <GroupIcon /> },
     { text: "Patient Overview", icon: <PeopleIcon /> },
@@ -37,45 +90,18 @@ export default function SuperAdminDashboard() {
   ];
 
   const activityLogs = [
-    {
-      id: 1,
-      message: "Admin John updated Staff Records",
-      timestamp: "2025-09-20 10:32 AM",
-    },
-    {
-      id: 2,
-      message: "Admin Maria added a new Patient",
-      timestamp: "2025-09-20 09:45 AM",
-    },
+    { id: 1, message: "Admin John updated Staff Records", timestamp: "2025-09-20 10:32 AM" },
+    { id: 2, message: "Admin Maria added a new Patient", timestamp: "2025-09-20 09:45 AM" },
     { id: 3, message: "System backup completed", timestamp: "2025-09-19 11:10 PM" },
   ];
 
-  // 👤 Replace this with real logged-in user later
-  const username = "John Doe";
-
-  // ⏰ Server time
-  const [time, setTime] = useState(new Date());
-  useEffect(() => {
-    const interval = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <DashboardLayout title="Super Admin Dashboard" menuItems={menuItems}>
-      {/* Header Row: Welcome (left) + Time (right) */}
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={3}
-        px={2}
-      >
-        {/* Welcome */}
+      {/* Header Row: Welcome + Time */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} px={2}>
         <Typography variant="h6" fontWeight="bold">
           Welcome, {username} 👋
         </Typography>
-
-        {/* Server Time */}
         <Box display="flex" alignItems="center" gap={1.5}>
           <AccessTimeIcon fontSize="medium" color="primary" />
           <Box textAlign="right">
@@ -90,13 +116,8 @@ export default function SuperAdminDashboard() {
       </Box>
 
       {/* Main Content */}
-      <Grid
-        container
-        spacing={3}
-        justifyContent="center"
-        alignItems="flex-start"
-      >
-        {/* Stats Cards Row */}
+      <Grid container spacing={3} justifyContent="center" alignItems="flex-start">
+        {/* Stats Cards */}
         <Grid item xs={12} container spacing={3} justifyContent="center">
           <Grid item xs={12} sm={6} md={3}>
             <Card sx={glassStyle}>
@@ -111,7 +132,6 @@ export default function SuperAdminDashboard() {
               </CardContent>
             </Card>
           </Grid>
-
           <Grid item xs={12} sm={6} md={3}>
             <Card sx={glassStyle}>
               <CardContent>
@@ -125,7 +145,6 @@ export default function SuperAdminDashboard() {
               </CardContent>
             </Card>
           </Grid>
-
           <Grid item xs={12} sm={6} md={3}>
             <Card sx={glassStyle}>
               <CardContent>
@@ -139,7 +158,6 @@ export default function SuperAdminDashboard() {
               </CardContent>
             </Card>
           </Grid>
-
           <Grid item xs={12} sm={6} md={3}>
             <Card sx={glassStyle}>
               <CardContent>
@@ -155,7 +173,7 @@ export default function SuperAdminDashboard() {
           </Grid>
         </Grid>
 
-        {/* Admin Activity */}
+        {/* Admin Activity Logs */}
         <Grid item xs={12} md={4}>
           <Card sx={{ ...glassStyle, height: 350 }}>
             <CardContent>
@@ -165,10 +183,7 @@ export default function SuperAdminDashboard() {
               <List dense>
                 {activityLogs.map((log) => (
                   <ListItem key={log.id} divider>
-                    <ListItemText
-                      primary={log.message}
-                      secondary={log.timestamp}
-                    />
+                    <ListItemText primary={log.message} secondary={log.timestamp} />
                   </ListItem>
                 ))}
               </List>

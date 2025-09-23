@@ -10,82 +10,60 @@ import {
   CircularProgress,
   GlobalStyles,
 } from "@mui/material";
-import { auth, db } from "./firebase/firebase";
+import { auth, db } from "./firebase/firebase"; // ✅ make sure db is exported in firebase.js
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+
 import bgImage from "../assets/bg2.png";
 import logo from "../assets/log.png";
 
 export default function Login() {
+  // -------------------- State --------------------
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [fadeIn, setFadeIn] = useState(false);
-  const [showError, setShowError] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => setFadeIn(true), []);
 
-  const getFriendlyError = (firebaseError) => {
-    switch (firebaseError.code) {
-      case "auth/invalid-email":
-        return "The email address is not valid.";
-      case "auth/user-not-found":
-        return "No account found with this email.";
-      case "auth/wrong-password":
-        return "Incorrect password. Please try again.";
-      case "auth/too-many-requests":
-        return "Too many failed attempts. Please try again later.";
-      case "auth/invalid-credential":
-        return "Invalid credentials provided. Please check your email and password.";
-      default:
-        return "An unexpected error occurred. Please try again.";
-    }
-  };
-
+  // -------------------- Handle Login --------------------
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
-    setShowError(false);
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      const q = query(collection(db, "users"), where("email", "==", email));
-      const querySnapshot = await getDocs(q);
+      // 1. Firebase Auth login
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-      if (!querySnapshot.empty) {
-        const userData = querySnapshot.docs[0].data();
-        const accountType = userData.accountType;
+      // 2. Get role from Firestore (users collection)
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const role = userData.role;
 
-        switch (accountType) {
-          case "superadmin":
-            navigate("/superadmin");
-            break;
-          case "admin":
-            navigate("/admin");
-            break;
-          case "staff":
-            navigate("/staff");
-            break;
-          default:
-            setError("Unknown account type");
-            setShowError(true);
-        }
+        // 3. Redirect based on role
+        if (role === "superadmin") navigate("/superadmin");
+        else if (role === "admin") navigate("/admin");
+        else if (role === "staff") navigate("/staff");
+        else setError("Role not assigned. Please contact administrator.");
       } else {
-        setError("No account data found.");
-        setShowError(true);
+        setError("No user profile found in database.");
       }
     } catch (err) {
-      setError(getFriendlyError(err));
-      setShowError(true);
+      console.error(err);
+      setError("Invalid email or password. Please try again.");
     }
 
     setLoading(false);
   };
 
+  // -------------------- UI --------------------
   return (
     <>
       <GlobalStyles
@@ -157,7 +135,7 @@ export default function Login() {
               }}
             />
 
-            {/* Professional greeting */}
+            {/* Greeting */}
             <Box sx={{ mb: 3, textAlign: "center" }}>
               <Typography
                 variant="h5"
@@ -176,26 +154,26 @@ export default function Login() {
               </Typography>
             </Box>
 
-            <form onSubmit={handleLogin} style={{ width: "100%", position: "relative" }}>
-              {/* Professional text error overlay */}
-              <Typography
-                color="error"
-                variant="body2"
-                textAlign="center"
-                sx={{
-                  fontWeight: "bold",
-                  height: 24, // reserve space even when empty
-                  mb: 1,
-                  opacity: showError ? 1 : 0,
-                  transition: "opacity 0.5s ease-in-out",
-                  position: "absolute",
-                  top: -28,
-                  left: 0,
-                  width: "100%",
-                }}
-              >
-                {error}
-              </Typography>
+            {/* Login Form */}
+            <form
+              onSubmit={handleLogin}
+              style={{ width: "100%", position: "relative" }}
+            >
+              {/* Error message */}
+              {error && (
+                <Typography
+                  color="error"
+                  variant="body2"
+                  textAlign="center"
+                  sx={{
+                    fontWeight: "bold",
+                    mb: 2,
+                    transition: "opacity 0.5s ease-in-out",
+                  }}
+                >
+                  {error}
+                </Typography>
+              )}
 
               <TextField
                 label="Email"

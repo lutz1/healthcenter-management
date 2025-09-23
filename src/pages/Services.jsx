@@ -1,15 +1,21 @@
-import React from "react";
+// src/modules/Services.jsx
+import React, { useState } from "react";
 import { Typography, Box } from "@mui/material";
+import DashboardLayout from "../layouts/DashboardLayout";
 
 export default function Services() {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
   return (
-    <Box p={3}>
-      <Typography variant="h4" gutterBottom>
-        Services
-      </Typography>
-      <Typography>
-        Manage hospital services and procedures.
-      </Typography>
-    </Box>
+    <DashboardLayout title="Services Management" open={sidebarOpen} setOpen={setSidebarOpen}>
+      <Box p={3}>
+        <Typography variant="h4" gutterBottom>
+          Services Management
+        </Typography>
+        <Typography>
+          Manage all services provided here.
+        </Typography>
+      </Box>
+    </DashboardLayout>
   );
 }

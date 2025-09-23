@@ -1,0 +1,179 @@
+[debug] [2025-09-23T02:05:33.034Z] ----------------------------------------------------------------------
+[debug] [2025-09-23T02:05:33.037Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\acer0\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions
+[debug] [2025-09-23T02:05:33.037Z] CLI Version:   14.15.2
+[debug] [2025-09-23T02:05:33.037Z] Platform:      win32
+[debug] [2025-09-23T02:05:33.037Z] Node Version:  v22.17.1
+[debug] [2025-09-23T02:05:33.038Z] Time:          Tue Sep 23 2025 10:05:33 GMT+0800 (Philippine Standard Time)
+[debug] [2025-09-23T02:05:33.038Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-09-23T02:05:33.272Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-09-23T02:05:33.273Z] > authorizing via signed-in user (johnn.onezero@gmail.com)
+[debug] [2025-09-23T02:05:33.273Z] [iam] checking project healthcenter-61826 for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2025-09-23T02:05:33.274Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:33.274Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:33.275Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/healthcenter-61826:testIamPermissions [none]
+[debug] [2025-09-23T02:05:33.276Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/healthcenter-61826:testIamPermissions x-goog-quota-user=projects/healthcenter-61826
+[debug] [2025-09-23T02:05:33.276Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/healthcenter-61826:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-09-23T02:05:34.530Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/healthcenter-61826:testIamPermissions 200
+[debug] [2025-09-23T02:05:34.530Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/healthcenter-61826:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-09-23T02:05:34.531Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:34.531Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:34.531Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/healthcenter-61826/serviceAccounts/healthcenter-61826@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2025-09-23T02:05:34.531Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/healthcenter-61826/serviceAccounts/healthcenter-61826@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2025-09-23T02:05:36.035Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/healthcenter-61826/serviceAccounts/healthcenter-61826@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2025-09-23T02:05:36.035Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/healthcenter-61826/serviceAccounts/healthcenter-61826@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[info] 
+[info] === Deploying to 'healthcenter-61826'...
+[info] 
+[info] i  deploying functions 
+[debug] [2025-09-23T02:05:36.042Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:36.042Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:36.042Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/healthcenter-61826 [none]
+[debug] [2025-09-23T02:05:36.330Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/healthcenter-61826 200
+[debug] [2025-09-23T02:05:36.330Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/healthcenter-61826 {"projectNumber":"469079304917","projectId":"healthcenter-61826","lifecycleState":"ACTIVE","name":"HealthCenter","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-09-21T07:46:00.259542Z"}
+[info] i  functions: preparing codebase default for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2025-09-23T02:05:36.337Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:36.337Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:36.338Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/healthcenter-61826/adminSdkConfig [none]
+[debug] [2025-09-23T02:05:37.318Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/healthcenter-61826/adminSdkConfig 200
+[debug] [2025-09-23T02:05:37.318Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/healthcenter-61826/adminSdkConfig {"projectId":"healthcenter-61826","storageBucket":"healthcenter-61826.firebasestorage.app"}
+[debug] [2025-09-23T02:05:37.319Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:37.319Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:37.319Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/healthcenter-61826/configs [none]
+[debug] [2025-09-23T02:05:38.320Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/healthcenter-61826/configs 200
+[debug] [2025-09-23T02:05:38.320Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/healthcenter-61826/configs {}
+[debug] [2025-09-23T02:05:38.322Z] Validating nodejs source
+[debug] [2025-09-23T02:05:39.985Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.4.0"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.1.0"
+  },
+  "private": true
+}
+[debug] [2025-09-23T02:05:39.985Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase default to determine what to deploy 
+[debug] [2025-09-23T02:05:39.987Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-09-23T02:05:39.997Z] Found firebase-functions binary at 'D:\tagum-heatmap\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8859
+
+[debug] [2025-09-23T02:05:40.676Z] Got response from /__/functions.yaml {"endpoints":{"helloWorld":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"helloWorld"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[info] i  extensions: ensuring required API firebaseextensions.googleapis.com is enabled... 
+[debug] [2025-09-23T02:05:44.728Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-09-23T02:05:44.729Z] > authorizing via signed-in user (johnn.onezero@gmail.com)
+[debug] [2025-09-23T02:05:44.729Z] [iam] checking project healthcenter-61826 for permissions ["firebase.projects.get","firebaseextensions.instances.list"]
+[debug] [2025-09-23T02:05:44.729Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:44.729Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:44.729Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/healthcenter-61826:testIamPermissions [none]
+[debug] [2025-09-23T02:05:44.729Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/healthcenter-61826:testIamPermissions x-goog-quota-user=projects/healthcenter-61826
+[debug] [2025-09-23T02:05:44.729Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/healthcenter-61826:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-09-23T02:05:46.066Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/healthcenter-61826:testIamPermissions 200
+[debug] [2025-09-23T02:05:46.066Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/healthcenter-61826:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2025-09-23T02:05:46.067Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:46.067Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:46.067Z] >>> [apiv2][query] GET https://firebaseextensions.googleapis.com/v1beta/projects/healthcenter-61826/instances pageSize=100&pageToken=
+[debug] [2025-09-23T02:05:47.332Z] <<< [apiv2][status] GET https://firebaseextensions.googleapis.com/v1beta/projects/healthcenter-61826/instances 200
+[debug] [2025-09-23T02:05:47.332Z] <<< [apiv2][body] GET https://firebaseextensions.googleapis.com/v1beta/projects/healthcenter-61826/instances {}
+[info] i  functions: preparing functions directory for uploading... 
+[info] i  functions: packaged D:\tagum-heatmap\functions (29.9 KB) for uploading 
+[debug] [2025-09-23T02:05:47.389Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:47.389Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:47.390Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/healthcenter-61826/locations/-/functions [none]
+[debug] [2025-09-23T02:05:48.352Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/healthcenter-61826/locations/-/functions 200
+[debug] [2025-09-23T02:05:48.353Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/healthcenter-61826/locations/-/functions {}
+[debug] [2025-09-23T02:05:48.353Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:48.353Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:48.354Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/healthcenter-61826/locations/-/functions filter=environment%3D%22GEN_2%22
+[debug] [2025-09-23T02:05:50.356Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/healthcenter-61826/locations/-/functions 200
+[debug] [2025-09-23T02:05:50.357Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/healthcenter-61826/locations/-/functions {"functions":[{"name":"projects/healthcenter-61826/locations/us-central1/functions/helloWorld","buildConfig":{"build":"projects/469079304917/locations/us-central1/builds/65362205-a32d-4d8b-936d-89a6295db757","runtime":"nodejs22","entryPoint":"helloWorld","source":{"storageSource":{"bucket":"gcf-v2-sources-469079304917-us-central1","object":"helloWorld/function-source.zip","generation":"1758579679551992"}},"environmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""},"dockerRepository":"projects/healthcenter-61826/locations/us-central1/repositories/gcf-artifacts","sourceProvenance":{"resolvedStorageSource":{"bucket":"gcf-v2-sources-469079304917-us-central1","object":"helloWorld/function-source.zip","generation":"1758579679551992"}},"dockerRegistry":"ARTIFACT_REGISTRY","serviceAccount":"projects/healthcenter-61826/serviceAccounts/469079304917-compute@developer.gserviceaccount.com","automaticUpdatePolicy":{}},"state":"UNKNOWN","updateTime":"2025-09-23T01:48:04.947266634Z","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"b40e1e4c07ab4233b311535a840660f6110e2b6c"},"stateMessages":[{"severity":"ERROR","type":"CloudRunServiceNotFound","message":"Cloud Run service projects/healthcenter-61826/locations/us-central1/services/helloworld for the function was not found. The function will not work correctly. Please redeploy."}],"environment":"GEN_2","url":"https://us-central1-healthcenter-61826.cloudfunctions.net/helloWorld","createTime":"2025-09-22T22:21:19.801915182Z","satisfiesPzi":true}]}
+[info] i  functions: ensuring required API run.googleapis.com is enabled... 
+[info] i  functions: ensuring required API eventarc.googleapis.com is enabled... 
+[info] i  functions: ensuring required API pubsub.googleapis.com is enabled... 
+[info] i  functions: ensuring required API storage.googleapis.com is enabled... 
+[info] i  functions: generating the service identity for pubsub.googleapis.com... 
+[debug] [2025-09-23T02:05:50.364Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:50.364Z] Checked if tokens are valid: true, expires at: 1758596332673
+[info] i  functions: generating the service identity for eventarc.googleapis.com... 
+[debug] [2025-09-23T02:05:50.364Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:50.364Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:50.365Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/469079304917/services/pubsub.googleapis.com:generateServiceIdentity [none]
+[debug] [2025-09-23T02:05:50.365Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1beta1/projects/469079304917/services/pubsub.googleapis.com:generateServiceIdentity x-goog-quota-user=projects/469079304917
+[debug] [2025-09-23T02:05:50.365Z] >>> [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/469079304917/services/pubsub.googleapis.com:generateServiceIdentity {}
+[debug] [2025-09-23T02:05:50.366Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1beta1/projects/469079304917/services/eventarc.googleapis.com:generateServiceIdentity [none]
+[debug] [2025-09-23T02:05:50.366Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1beta1/projects/469079304917/services/eventarc.googleapis.com:generateServiceIdentity x-goog-quota-user=projects/469079304917
+[debug] [2025-09-23T02:05:50.367Z] >>> [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/469079304917/services/eventarc.googleapis.com:generateServiceIdentity {}
+[debug] [2025-09-23T02:05:51.818Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/469079304917/services/eventarc.googleapis.com:generateServiceIdentity 200
+[debug] [2025-09-23T02:05:51.818Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/469079304917/services/eventarc.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-469079304917@gcp-sa-eventarc.iam.gserviceaccount.com","uniqueId":"103192174610148065907"}}
+[debug] [2025-09-23T02:05:51.871Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1beta1/projects/469079304917/services/pubsub.googleapis.com:generateServiceIdentity 200
+[debug] [2025-09-23T02:05:51.871Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1beta1/projects/469079304917/services/pubsub.googleapis.com:generateServiceIdentity {"name":"operations/finished.DONE_OPERATION","done":true,"response":{"@type":"type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity","email":"service-469079304917@gcp-sa-pubsub.iam.gserviceaccount.com","uniqueId":"102288638030777513510"}}
+[debug] [2025-09-23T02:05:51.876Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:51.876Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:51.876Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/healthcenter-61826 [none]
+[debug] [2025-09-23T02:05:53.117Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/healthcenter-61826 200
+[debug] [2025-09-23T02:05:53.118Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/healthcenter-61826 {"projectNumber":"469079304917","projectId":"healthcenter-61826","lifecycleState":"ACTIVE","name":"HealthCenter","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-09-21T07:46:00.259542Z"}
+[debug] [2025-09-23T02:05:53.119Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:53.119Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:53.119Z] >>> [apiv2][query] GET https://compute.googleapis.com/compute/v1/projects/469079304917 [none]
+[debug] [2025-09-23T02:05:53.786Z] <<< [apiv2][status] GET https://compute.googleapis.com/compute/v1/projects/469079304917 403
+[debug] [2025-09-23T02:05:53.786Z] <<< [apiv2][body] GET https://compute.googleapis.com/compute/v1/projects/469079304917 {"error":{"code":403,"message":"Compute Engine API has not been used in project 469079304917 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","errors":[{"message":"Compute Engine API has not been used in project 469079304917 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","domain":"usageLimits","reason":"accessNotConfigured","extendedHelp":"https://console.developers.google.com"}],"status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"activationUrl":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917","serviceTitle":"Compute Engine API","containerInfo":"469079304917","service":"compute.googleapis.com","consumer":"projects/469079304917"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Compute Engine API has not been used in project 469079304917 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917"}]}]}}
+[debug] [2025-09-23T02:05:53.787Z] unable to look up default compute service account. Falling back to 469079304917-compute@developer.gserviceaccount.com. Error: {"name":"FirebaseError","children":[],"context":{"body":{"error":{"code":403,"message":"Compute Engine API has not been used in project 469079304917 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","errors":[{"message":"Compute Engine API has not been used in project 469079304917 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","domain":"usageLimits","reason":"accessNotConfigured","extendedHelp":"https://console.developers.google.com"}],"status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"activationUrl":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917","serviceTitle":"Compute Engine API","containerInfo":"469079304917","service":"compute.googleapis.com","consumer":"projects/469079304917"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Compute Engine API has not been used in project 469079304917 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917"}]}]}},"response":{"statusCode":403}},"exit":1,"message":"Request to https://compute.googleapis.com/compute/v1/projects/469079304917 had HTTP Error: 403, Compute Engine API has not been used in project 469079304917 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","status":403}
+[debug] [2025-09-23T02:05:53.787Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:53.787Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:53.787Z] >>> [apiv2][query] GET https://compute.googleapis.com/compute/v1/projects/469079304917 [none]
+[debug] [2025-09-23T02:05:54.162Z] <<< [apiv2][status] GET https://compute.googleapis.com/compute/v1/projects/469079304917 403
+[debug] [2025-09-23T02:05:54.162Z] <<< [apiv2][body] GET https://compute.googleapis.com/compute/v1/projects/469079304917 {"error":{"code":403,"message":"Compute Engine API has not been used in project 469079304917 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","errors":[{"message":"Compute Engine API has not been used in project 469079304917 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","domain":"usageLimits","reason":"accessNotConfigured","extendedHelp":"https://console.developers.google.com"}],"status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"serviceTitle":"Compute Engine API","consumer":"projects/469079304917","service":"compute.googleapis.com","containerInfo":"469079304917","activationUrl":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Compute Engine API has not been used in project 469079304917 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917"}]}]}}
+[debug] [2025-09-23T02:05:54.162Z] unable to look up default compute service account. Falling back to 469079304917-compute@developer.gserviceaccount.com. Error: {"name":"FirebaseError","children":[],"context":{"body":{"error":{"code":403,"message":"Compute Engine API has not been used in project 469079304917 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","errors":[{"message":"Compute Engine API has not been used in project 469079304917 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","domain":"usageLimits","reason":"accessNotConfigured","extendedHelp":"https://console.developers.google.com"}],"status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"serviceTitle":"Compute Engine API","consumer":"projects/469079304917","service":"compute.googleapis.com","containerInfo":"469079304917","activationUrl":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Compute Engine API has not been used in project 469079304917 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917"}]}]}},"response":{"statusCode":403}},"exit":1,"message":"Request to https://compute.googleapis.com/compute/v1/projects/469079304917 had HTTP Error: 403, Compute Engine API has not been used in project 469079304917 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/compute.googleapis.com/overview?project=469079304917 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","status":403}
+[debug] [2025-09-23T02:05:54.164Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:54.164Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:54.164Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/healthcenter-61826/billingInfo [none]
+[debug] [2025-09-23T02:05:55.504Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/healthcenter-61826/billingInfo 200
+[debug] [2025-09-23T02:05:55.504Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/healthcenter-61826/billingInfo {"name":"projects/healthcenter-61826/billingInfo","projectId":"healthcenter-61826","billingAccountName":"billingAccounts/01685B-BF24E7-2B414B","billingEnabled":true}
+[info] i  functions: updating Node.js 22 (2nd Gen) function helloWorld(us-central1)... 
+[debug] [2025-09-23T02:05:55.511Z] Precondition failed. Cannot update a GCFv2 function without storage
+[debug] [2025-09-23T02:05:55.518Z] Total Function Deployment time: 2
+[debug] [2025-09-23T02:05:55.518Z] 1 Functions Deployed
+[debug] [2025-09-23T02:05:55.518Z] 1 Functions Errored
+[debug] [2025-09-23T02:05:55.518Z] 0 Function Deployments Aborted
+[debug] [2025-09-23T02:05:55.518Z] Average Function Deployment time: 1
+[info] 
+[info] Functions deploy had errors with the following functions:
+	helloWorld(us-central1)
+[debug] [2025-09-23T02:05:55.993Z] Not printing URL for HTTPS function. Typically this means it didn't match a filter or we failed deployment
+[debug] [2025-09-23T02:05:55.994Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:55.994Z] Checked if tokens are valid: true, expires at: 1758596332673
+[debug] [2025-09-23T02:05:55.994Z] >>> [apiv2][query] GET https://artifactregistry.googleapis.com/v1/projects/healthcenter-61826/locations/us-central1/repositories/gcf-artifacts [none]
+[debug] [2025-09-23T02:05:57.423Z] <<< [apiv2][status] GET https://artifactregistry.googleapis.com/v1/projects/healthcenter-61826/locations/us-central1/repositories/gcf-artifacts 200
+[debug] [2025-09-23T02:05:57.424Z] <<< [apiv2][body] GET https://artifactregistry.googleapis.com/v1/projects/healthcenter-61826/locations/us-central1/repositories/gcf-artifacts {"name":"projects/healthcenter-61826/locations/us-central1/repositories/gcf-artifacts","format":"DOCKER","description":"This repository is created and used by Cloud Functions for storing function docker images.","labels":{"goog-managed-by":"cloudfunctions"},"createTime":"2025-09-22T12:42:07.624163Z","updateTime":"2025-09-22T13:00:55.698736Z","mode":"STANDARD_REPOSITORY","cleanupPolicies":{"firebase-functions-cleanup":{"id":"firebase-functions-cleanup","action":"DELETE","condition":{"tagState":"ANY","olderThan":"86400s"}}},"vulnerabilityScanningConfig":{"lastEnableTime":"2025-09-22T12:41:59.171768800Z","enablementState":"SCANNING_DISABLED","enablementStateReason":"API containerscanning.googleapis.com is not enabled."},"satisfiesPzi":true,"registryUri":"us-central1-docker.pkg.dev/healthcenter-61826/gcf-artifacts"}
+[debug] [2025-09-23T02:05:57.424Z] Functions deploy failed.
+[debug] [2025-09-23T02:05:57.424Z] {}
+[debug] [2025-09-23T02:05:58.171Z] Error: Precondition failed
+    at Fabricator.updateV2Function (C:\Users\acer0\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:394:19)
+    at Fabricator.updateEndpoint (C:\Users\acer0\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:160:24)
+    at C:\Users\acer0\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:110:71
+    at handle (C:\Users\acer0\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:89:23)
+    at Fabricator.applyChangeset (C:\Users\acer0\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:110:26)
+    at C:\Users\acer0\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:69:40
+    at Array.map (<anonymous>)
+    at Fabricator.applyPlan (C:\Users\acer0\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:68:54)
+    at release (C:\Users\acer0\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\index.js:76:31)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[error] 
+[error] Error: There was an error deploying functions

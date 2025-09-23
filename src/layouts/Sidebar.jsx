@@ -12,6 +12,7 @@ import {
   Divider,
   Tooltip,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import MenuIcon from "@mui/icons-material/Menu";
 import EventIcon from "@mui/icons-material/Event";
 import InventoryIcon from "@mui/icons-material/Inventory";
@@ -21,18 +22,17 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
-
-// ✅ New icons
 import BadgeIcon from "@mui/icons-material/Badge";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import DescriptionIcon from "@mui/icons-material/Description";
 import BuildCircleIcon from "@mui/icons-material/BuildCircle";
 
-// ✅ Import logo image
+// Import logo image
 import MyLogo from "../assets/log.png";
 
 export default function Sidebar({ open, setOpen }) {
-  // ✅ Default: all subitems expanded
+  const navigate = useNavigate();
+
   const [collapse, setCollapse] = useState({
     management: true,
     records: true,
@@ -47,16 +47,16 @@ export default function Sidebar({ open, setOpen }) {
     {
       section: "Dashboard",
       key: "dashboard",
-      items: [{ text: "Overview", icon: <DashboardIcon /> }],
+      items: [{ text: "Overview", icon: <DashboardIcon />, path: "/superadmin" }],
       toggleable: false,
     },
     {
       section: "Management",
       key: "management",
       items: [
-        { text: "Staff", icon: <BadgeIcon /> },
-        { text: "Patients", icon: <LocalHospitalIcon /> },
-        { text: "Events", icon: <EventIcon /> },
+        { text: "Staff", icon: <BadgeIcon />, path: "/management/staff" },
+        { text: "Patients", icon: <LocalHospitalIcon />, path: "/management/patients" },
+        { text: "Events", icon: <EventIcon />, path: "/management/events" },
       ],
       toggleable: true,
     },
@@ -64,23 +64,23 @@ export default function Sidebar({ open, setOpen }) {
       section: "Records & Data",
       key: "records",
       items: [
-        { text: "Medical Records", icon: <DescriptionIcon /> },
-        { text: "Services", icon: <BuildCircleIcon /> },
-        { text: "Inventory", icon: <InventoryIcon /> },
-        { text: "Logs & History", icon: <HistoryIcon /> },
+        { text: "Medical Records", icon: <DescriptionIcon />, path: "/records/medical-records" },
+        { text: "Services", icon: <BuildCircleIcon />, path: "/records/services" },
+        { text: "Inventory", icon: <InventoryIcon />, path: "/records/inventory" },
+        { text: "Logs & History", icon: <HistoryIcon />, path: "/records/logs-history" },
       ],
       toggleable: true,
     },
     {
       section: "Analytics",
       key: "analytics",
-      items: [{ text: "Reports", icon: <BarChartIcon /> }],
+      items: [{ text: "Reports", icon: <BarChartIcon />, path: "/analytics/reports" }],
       toggleable: true,
     },
     {
       section: null,
       key: "settings",
-      items: [{ text: "Settings", icon: <SettingsIcon /> }],
+      items: [{ text: "Settings", icon: <SettingsIcon />, path: "/settings" }],
       toggleable: false,
     },
   ];
@@ -124,11 +124,7 @@ export default function Sidebar({ open, setOpen }) {
             component="img"
             src={MyLogo}
             alt="My Logo"
-            sx={{
-              height: 40,
-              objectFit: "contain",
-              alignItems: "center",
-            }}
+            sx={{ height: 40, objectFit: "contain", alignItems: "center" }}
           />
         )}
         <IconButton
@@ -142,21 +138,16 @@ export default function Sidebar({ open, setOpen }) {
         </IconButton>
       </Box>
 
-      {/* Divider between logo and menu */}
       <Divider />
 
-      {/* Scrollable menu items */}
       <Box sx={{ overflowY: "auto", flex: 1 }}>
         <List>
           {menuItems.map((menu) => (
             <Box key={menu.key}>
-              {/* Section label (NO hover effect here) */}
               {menu.section && open && (
                 <ListItem
                   button={menu.toggleable}
-                  onClick={
-                    menu.toggleable ? () => toggleCollapse(menu.key) : undefined
-                  }
+                  onClick={menu.toggleable ? () => toggleCollapse(menu.key) : undefined}
                   sx={{
                     px: 3,
                     cursor: menu.toggleable ? "pointer" : "default",
@@ -184,7 +175,6 @@ export default function Sidebar({ open, setOpen }) {
                 </ListItem>
               )}
 
-              {/* Sub-items */}
               <Collapse
                 in={menu.toggleable ? collapse[menu.key] : true}
                 timeout={{ enter: 500, exit: 400 }}
@@ -196,6 +186,7 @@ export default function Sidebar({ open, setOpen }) {
                       <ListItem
                         button
                         key={subIndex}
+                        onClick={() => navigate(subItem.path)}
                         sx={{
                           pl: open ? 5 : 2,
                           py: 1.2,
@@ -217,7 +208,7 @@ export default function Sidebar({ open, setOpen }) {
                               ? {}
                               : {
                                   "&:hover": {
-                                    transform: "scale(1.1)", // ✅ zoom only when collapsed
+                                    transform: "scale(1.1)",
                                   },
                                 }),
                           }}
@@ -227,16 +218,12 @@ export default function Sidebar({ open, setOpen }) {
                         {open && (
                           <ListItemText
                             primary={subItem.text}
-                            sx={{
-                              ml: 1,
-                              transition: "opacity 0.3s ease-in-out",
-                            }}
+                            sx={{ ml: 1, transition: "opacity 0.3s ease-in-out" }}
                           />
                         )}
                       </ListItem>
                     );
 
-                    // ✅ Tooltip only when collapsed
                     return open ? (
                       listItemContent
                     ) : (

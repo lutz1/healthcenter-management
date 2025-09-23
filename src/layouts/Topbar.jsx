@@ -1,5 +1,5 @@
 // Topbar.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   AppBar,
   Toolbar,
@@ -18,37 +18,73 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import LanguageIcon from "@mui/icons-material/Language";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useNavigate } from "react-router-dom";
+import { auth, db } from "../modules/firebase/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function Topbar({ title, open }) {
   const drawerWidth = open ? 240 : 60;
   const navigate = useNavigate();
 
-  // Dropdown menu state
   const [anchorEl, setAnchorEl] = useState(null);
   const openMenu = Boolean(anchorEl);
+
+  const [user, setUser] = useState(null);
+
+  // Fetch logged-in user info
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (!currentUser) {
+        navigate("/"); // redirect to login if not logged in
+        return;
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        if (userDoc.exists()) {
+          setUser({ ...userDoc.data(), uid: currentUser.uid });
+        } else {
+          setUser({ name: "Unknown", uid: currentUser.uid });
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
 
   const handleAvatarClick = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
 
   const handleProfileRedirect = () => {
     handleMenuClose();
-    navigate("/superadmin/profile"); // redirect to My Profile page
+    navigate("/superadmin/profile");
   };
+
   const handleToggleDarkMode = () => {
     handleMenuClose();
     alert("Toggle dark mode clicked!");
   };
+
   const handleHelp = () => {
     handleMenuClose();
     alert("Help clicked!");
   };
+
   const handleLanguage = () => {
     handleMenuClose();
     alert("Change language clicked!");
   };
-  const handleLogout = () => {
+
+  const handleLogout = async () => {
     handleMenuClose();
-    alert("Logout clicked!");
+    try {
+      await signOut(auth); // terminate all sessions
+      navigate("/"); // redirect to login
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   return (
@@ -72,7 +108,6 @@ export default function Topbar({ title, open }) {
           {title}
         </Typography>
 
-        {/* Avatar with arrow dropdown */}
         <Box>
           <IconButton
             onClick={handleAvatarClick}
@@ -80,14 +115,12 @@ export default function Topbar({ title, open }) {
             aria-controls={openMenu ? "account-menu" : undefined}
             aria-haspopup="true"
             aria-expanded={openMenu ? "true" : undefined}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 0.5,
-              p: 0,
-            }}
+            sx={{ display: "flex", alignItems: "center", gap: 0.5, p: 0 }}
           >
-            <Avatar alt="SuperAdmin" src="/path-to-avatar.png" />
+            <Avatar
+              alt={user?.name || "User"}
+              src={user?.avatar || "/path-to-avatar.png"}
+            />
             <ArrowDropDownIcon />
           </IconButton>
 
