@@ -3,16 +3,16 @@ import React, { useState, useEffect } from "react";
 import {
   Typography, Box, Button, TextField, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, IconButton,
-  Dialog, DialogTitle, DialogContent, DialogActions, MenuItem
+  Dialog, DialogTitle, DialogContent, DialogActions, MenuItem, CircularProgress, Alert
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
 
-import { db, functions } from "../modules/firebase/firebase";
-import { collection, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { db, auth } from "../modules/firebase/firebase";
+import { collection, getDocs, updateDoc, deleteDoc, doc, setDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
-import { httpsCallable } from "firebase/functions";
 
 export default function Staff() {
   const { role: currentUserRole, user: authUser, loading } = useAuth();
@@ -33,6 +33,9 @@ export default function Staff() {
   });
   const [editId, setEditId] = useState(null);
   const [roleFilter, setRoleFilter] = useState("all");
+  const [loadingAction, setLoadingAction] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   // Fetch users from Firestore
   useEffect(() => {
@@ -78,6 +81,8 @@ export default function Staff() {
       setEditId(null);
     }
     setOpenDialog(true);
+    setSuccessMsg("");
+    setErrorMsg("");
   };
 
   const handleCloseDialog = () => setOpenDialog(false);
@@ -89,31 +94,66 @@ export default function Staff() {
       return;
     }
 
-    if (!authUser || (currentUserRole !== "superadmin" && currentUserRole !== "admin")) {
-      alert("❌ You must be logged in as Superadmin/Admin to create users.");
+    if (!authUser || currentUserRole !== "superadmin") {
+      alert("❌ Only Superadmin can create/update users.");
       return;
     }
 
+    if (!formData.email || (!editId && !formData.password)) {
+      alert("❌ Email and password are required for new users.");
+      return;
+    }
+
+    setLoadingAction(true);
+    setSuccessMsg("");
+    setErrorMsg("");
+
     try {
       if (editId) {
-        // Update Firestore
-        await updateDoc(doc(db, "users", editId), formData);
-        setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
+        // Update Firestore only
+        const updateData = { ...formData };
+        delete updateData.password; // don't store password
+        await updateDoc(doc(db, "users", editId), updateData);
+        setUserList(userList.map((u) => (u.id === editId ? { ...u, ...updateData } : u)));
+        setSuccessMsg("User updated successfully!");
       } else {
-        // ✅ Call secure Cloud Function
-        const createUser = httpsCallable(functions, "createUser");
+        // Create user in Firebase Auth
+        const newUser = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
 
-        console.log("Sending data to createUser:", formData);
+        // Save user in Firestore
+        await setDoc(doc(db, "users", newUser.user.uid), {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          birthdate: formData.birthdate,
+          address: formData.address,
+          role: formData.role,
+          createdAt: new Date(),
+          createdBy: authUser.email,
+        });
 
-        const result = await createUser(formData); // passes auth automatically
-        const data = result.data;
-
-        setUserList([...userList, { id: data.uid, ...data }]);
+        setUserList([...userList, { id: newUser.user.uid, ...formData }]);
+        setSuccessMsg(`${formData.role} account created successfully!`);
       }
+
       handleCloseDialog();
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        birthdate: "",
+        address: "",
+        password: "",
+        role: "staff",
+      });
+      setEditId(null);
     } catch (err) {
       console.error("Error saving user:", err);
-      alert("Error: " + err.message);
+      setErrorMsg(err.message || "Failed to save user");
+    } finally {
+      setLoadingAction(false);
     }
   };
 
@@ -128,7 +168,6 @@ export default function Staff() {
     }
   };
 
-  // Show loading state until AuthContext is ready
   if (loading) {
     return (
       <DashboardLayout title="User Management" open={sidebarOpen} setOpen={setSidebarOpen}>
@@ -156,7 +195,7 @@ export default function Staff() {
         >
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
             <Typography variant="h4">User Management</Typography>
-            {(currentUserRole === "superadmin" || currentUserRole === "admin") && (
+            {currentUserRole === "superadmin" && (
               <motion.div whileHover={{ scale: 1.05 }}>
                 <Button variant="contained" color="primary" onClick={() => handleOpenDialog()}>
                   + Create User
@@ -164,6 +203,9 @@ export default function Staff() {
               </motion.div>
             )}
           </Box>
+
+          {successMsg && <Alert severity="success" sx={{ mb: 2 }}>{successMsg}</Alert>}
+          {errorMsg && <Alert severity="error" sx={{ mb: 2 }}>{errorMsg}</Alert>}
 
           <Box display="flex" gap={2} mb={2}>
             <TextField
@@ -304,8 +346,8 @@ export default function Staff() {
             </DialogContent>
             <DialogActions>
               <Button onClick={handleCloseDialog}>Cancel</Button>
-              <Button onClick={handleSave} variant="contained">
-                {editId ? "Update" : "Create"}
+              <Button onClick={handleSave} variant="contained" disabled={loadingAction}>
+                {loadingAction ? <CircularProgress size={20} /> : editId ? "Update" : "Create"}
               </Button>
             </DialogActions>
           </Dialog>

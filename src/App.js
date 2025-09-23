@@ -8,7 +8,7 @@ import theme from "./theme";
 import SuperAdminDashboard from "./modules/SuperAdminDashboard";
 import AdminDashboard from "./modules/AdminDashboard";
 import StaffDashboard from "./modules/StaffDashboard";
-import Login from "./modules/Login"; // <-- ✅ Import Login
+import Login from "./modules/Login";
 
 // SuperAdmin Pages
 import Staff from "./pages/Staff";
@@ -25,12 +25,20 @@ import Settings from "./pages/Settings";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 // ---------- ProtectedRoute Component ----------
-const ProtectedRoute = ({ children, requiredRole }) => {
+const ProtectedRoute = ({ children, allowedEmails = [], requiredRole }) => {
   const { user, role, loading } = useAuth();
 
   if (loading) return <div style={{ textAlign: "center", marginTop: "50px" }}>Loading...</div>;
-  if (!user) return <Navigate to="/login" replace />; // <-- ✅ go to /login if not logged in
-  if (requiredRole && role !== requiredRole) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+
+  // Special email-based access for SuperAdmin
+  if (requiredRole === "superadmin" && !allowedEmails.includes(user.email)) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (requiredRole && role !== requiredRole && !allowedEmails.includes(user.email)) {
+    return <Navigate to="/login" replace />;
+  }
 
   return children;
 };
@@ -40,11 +48,12 @@ const AutoRedirect = () => {
   const { user, role, loading } = useAuth();
 
   if (loading) return <div style={{ textAlign: "center", marginTop: "50px" }}>Loading...</div>;
-  if (!user) return <Navigate to="/login" replace />; // <-- ✅ go to /login instead of /
+  if (!user) return <Navigate to="/login" replace />;
+
+  // Email-based redirect for Robert
+  if (user.email === "robert.llemit@gmail.com") return <Navigate to="/superadmin" replace />;
 
   switch (role) {
-    case "superadmin":
-      return <Navigate to="/superadmin" replace />;
     case "admin":
       return <Navigate to="/admin" replace />;
     case "staff":
@@ -70,7 +79,7 @@ function App() {
             <Route
               path="/superadmin"
               element={
-                <ProtectedRoute requiredRole="superadmin">
+                <ProtectedRoute requiredRole="superadmin" allowedEmails={["robert.llemit@gmail.com"]}>
                   <SuperAdminDashboard />
                 </ProtectedRoute>
               }
@@ -78,7 +87,7 @@ function App() {
             <Route
               path="/superadmin/dashboard"
               element={
-                <ProtectedRoute requiredRole="superadmin">
+                <ProtectedRoute requiredRole="superadmin" allowedEmails={["robert.llemit@gmail.com"]}>
                   <SuperAdminDashboard />
                 </ProtectedRoute>
               }
@@ -88,7 +97,7 @@ function App() {
             <Route
               path="/management/staff"
               element={
-                <ProtectedRoute requiredRole="superadmin">
+                <ProtectedRoute requiredRole="superadmin" allowedEmails={["robert.llemit@gmail.com"]}>
                   <Staff />
                 </ProtectedRoute>
               }
@@ -96,7 +105,7 @@ function App() {
             <Route
               path="/management/patients"
               element={
-                <ProtectedRoute requiredRole="superadmin">
+                <ProtectedRoute requiredRole="superadmin" allowedEmails={["robert.llemit@gmail.com"]}>
                   <Patients />
                 </ProtectedRoute>
               }
@@ -104,7 +113,7 @@ function App() {
             <Route
               path="/management/events"
               element={
-                <ProtectedRoute requiredRole="superadmin">
+                <ProtectedRoute requiredRole="superadmin" allowedEmails={["robert.llemit@gmail.com"]}>
                   <Events />
                 </ProtectedRoute>
               }
@@ -114,7 +123,7 @@ function App() {
             <Route
               path="/records/medical-records"
               element={
-                <ProtectedRoute requiredRole="superadmin">
+                <ProtectedRoute requiredRole="superadmin" allowedEmails={["robert.llemit@gmail.com"]}>
                   <MedicalRecords />
                 </ProtectedRoute>
               }
@@ -122,7 +131,7 @@ function App() {
             <Route
               path="/records/services"
               element={
-                <ProtectedRoute requiredRole="superadmin">
+                <ProtectedRoute requiredRole="superadmin" allowedEmails={["robert.llemit@gmail.com"]}>
                   <Services />
                 </ProtectedRoute>
               }
@@ -130,7 +139,7 @@ function App() {
             <Route
               path="/records/inventory"
               element={
-                <ProtectedRoute requiredRole="superadmin">
+                <ProtectedRoute requiredRole="superadmin" allowedEmails={["robert.llemit@gmail.com"]}>
                   <Inventory />
                 </ProtectedRoute>
               }
@@ -138,7 +147,7 @@ function App() {
             <Route
               path="/records/logs-history"
               element={
-                <ProtectedRoute requiredRole="superadmin">
+                <ProtectedRoute requiredRole="superadmin" allowedEmails={["robert.llemit@gmail.com"]}>
                   <LogsHistory />
                 </ProtectedRoute>
               }
@@ -148,7 +157,7 @@ function App() {
             <Route
               path="/analytics/reports"
               element={
-                <ProtectedRoute requiredRole="superadmin">
+                <ProtectedRoute requiredRole="superadmin" allowedEmails={["robert.llemit@gmail.com"]}>
                   <Reports />
                 </ProtectedRoute>
               }
@@ -158,7 +167,7 @@ function App() {
             <Route
               path="/settings"
               element={
-                <ProtectedRoute requiredRole="superadmin">
+                <ProtectedRoute requiredRole="superadmin" allowedEmails={["robert.llemit@gmail.com"]}>
                   <Settings />
                 </ProtectedRoute>
               }

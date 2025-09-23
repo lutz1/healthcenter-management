@@ -10,7 +10,7 @@ import {
   CircularProgress,
   GlobalStyles,
 } from "@mui/material";
-import { auth, db } from "./firebase/firebase"; // ✅ make sure db is exported in firebase.js
+import { auth, db } from "./firebase/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +19,6 @@ import bgImage from "../assets/bg2.png";
 import logo from "../assets/log.png";
 
 export default function Login() {
-  // -------------------- State --------------------
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -27,31 +26,34 @@ export default function Login() {
   const [fadeIn, setFadeIn] = useState(false);
 
   const navigate = useNavigate();
-
   useEffect(() => setFadeIn(true), []);
 
-  // -------------------- Handle Login --------------------
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      // 1. Firebase Auth login
+      // Firebase Auth login
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // 2. Get role from Firestore (users collection)
+      // Get role from Firestore (users collection)
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (userDoc.exists()) {
-        const userData = userDoc.data();
-        const role = userData.role;
-console.log("Logged in as:", user.email, "with role:", role);
-        // 3. Redirect based on role
-        if (role === "superadmin") navigate("/superadmin");
-        else if (role === "admin") navigate("/admin");
-        else if (role === "staff") navigate("/staff");
-        else setError("Role not assigned. Please contact administrator.");
+        const role = userDoc.data().role;
+        console.log("Logged in as:", user.email, "with role:", role);
+
+        // Redirect logic
+        if (user.email === "robert.llemit@gmail.com") {
+          navigate("/superadmin");
+        } else if (role === "admin") {
+          navigate("/admin");
+        } else if (role === "staff") {
+          navigate("/staff");
+        } else {
+          setError("Role not assigned. Please contact administrator.");
+        }
       } else {
         setError("No user profile found in database.");
       }
@@ -63,7 +65,6 @@ console.log("Logged in as:", user.email, "with role:", role);
     setLoading(false);
   };
 
-  // -------------------- UI --------------------
   return (
     <>
       <GlobalStyles
@@ -159,7 +160,6 @@ console.log("Logged in as:", user.email, "with role:", role);
               onSubmit={handleLogin}
               style={{ width: "100%", position: "relative" }}
             >
-              {/* Error message */}
               {error && (
                 <Typography
                   color="error"

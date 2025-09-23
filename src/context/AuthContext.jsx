@@ -1,3 +1,4 @@
+// src/context/AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { auth, db } from "../modules/firebase/firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -22,8 +23,9 @@ export const AuthProvider = ({ children }) => {
       try {
         const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
         if (userDoc.exists()) {
+          const dbRole = userDoc.data().role;
           setUser(firebaseUser);
-          setRole(userDoc.data().role || null);
+          setRole(dbRole === "admin" || dbRole === "staff" ? dbRole : null);
         } else {
           setUser(firebaseUser);
           setRole(null);
@@ -40,11 +42,7 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  return (
-    <AuthContext.Provider value={{ user, role, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ user, role, loading }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => useContext(AuthContext);
