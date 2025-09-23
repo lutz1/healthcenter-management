@@ -4,50 +4,54 @@ const admin = require("firebase-admin");
 
 admin.initializeApp();
 
-exports.createUser = functions.https.onCall(async (data, context) => {
-  // ✅ Check if user is authenticated
-
-  console.log("context.auth:", context.auth);
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      "unauthenticated",
-      "You must be logged in to create a user."
-    );
-  }
-  // ✅ Fetch user role from Firestore
-  const userDoc = await admin.firestore().collection("users").doc(context.auth.uid).get();
-  const currentUserRole = userDoc.exists ? userDoc.data().role : null;
-
-  if (currentUserRole !== "superadmin" && currentUserRole !== "admin") {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "Only admins or superadmins can create users."
-    );
-  }
-
+// ✅ Create User Function (HTTP Request)
+exports.createUser = functions.https.onRequest(async (req, res) => {
   try {
+    // ✅ Get token from Authorization header
+    const authHeader = req.headers.authorization || "";
+    if (!authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Unauthorized: No token provided" });
+    }
+
+    const idToken = authHeader.split("Bearer ")[1];
+
+    // ✅ Verify ID token
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const currentUserUid = decodedToken.uid;
+
+    // ✅ Get role of the caller
+    const userDoc = await admin.firestore().collection("users").doc(currentUserUid).get();
+    const currentUserRole = userDoc.exists ? userDoc.data().role : null;
+
+    if (currentUserRole !== "superadmin" && currentUserRole !== "admin") {
+      return res.status(403).json({ error: "Permission denied" });
+    }
+
+    // ✅ Extract data from request body
+    const { email, password, firstName, lastName, phone, birthdate, address, role } = req.body;
+
     // ✅ Create user in Firebase Authentication
     const userRecord = await admin.auth().createUser({
-      
-      email: data.email,
-      password: data.password,
-      displayName: `${data.firstName} ${data.lastName}`,
+      email,
+      password,
+      displayName: `${firstName} ${lastName}`,
     });
 
-    // ✅ Save to Firestore
+    // ✅ Save user to Firestore
     await admin.firestore().collection("users").doc(userRecord.uid).set({
       uid: userRecord.uid,
-      email: data.email,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      phone: data.phone,
-      birthdate: data.birthdate,
-      address: data.address,
-      role: data.role || "staff", // default staff
+      email,
+      firstName,
+      lastName,
+      phone,
+      birthdate,
+      address,
+      role: role || "staff", // default staff
     });
 
-    return { uid: userRecord.uid, email: data.email, role: data.role };
+    return res.status(200).json({ uid: userRecord.uid, email, role: role || "staff" });
   } catch (error) {
-    throw new functions.https.HttpsError("internal", error.message);
+    console.error("Error creating user:", error);
+    return res.status(500).json({ error: error.message });
   }
 });

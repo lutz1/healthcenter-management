@@ -9,10 +9,10 @@ import { Edit, Delete } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
 
-import { db, functions, auth } from "../modules/firebase/firebase"; // ✅ always use same auth
+import { db } from "../modules/firebase/firebase";
 import { collection, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { httpsCallable } from "firebase/functions";
+import { getAuth } from "firebase/auth";
 
 export default function Staff() {
   const { role: currentUserRole, user: authUser, loading } = useAuth();
@@ -100,19 +100,38 @@ export default function Staff() {
         await updateDoc(doc(db, "users", editId), formData);
         setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
       } else {
-        // ✅ Debug auth state
-        console.log("Auth user at save:", auth.currentUser);
+        // 🔹 HTTP request to Cloud Function
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
 
-        if (!auth.currentUser) {
+        if (!currentUser) {
           throw new Error("Not logged in.");
         }
 
-        // ✅ Call secure Cloud Function (auto-attaches ID token)
-        const createUser = httpsCallable(functions, "createUser");
-        const { data } = await createUser(formData);
+        // Get Firebase ID token
+        const token = await currentUser.getIdToken();
 
+        const response = await fetch(
+          "https://us-central1-healthcenter-61826.cloudfunctions.net/createUser",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(formData),
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to create user");
+        }
+
+        const data = await response.json();
         setUserList([...userList, { id: data.uid, ...data }]);
       }
+
       handleCloseDialog();
     } catch (err) {
       console.error("Error saving user:", err);
@@ -131,7 +150,6 @@ export default function Staff() {
     }
   };
 
-  // 🔹 Show loading state until AuthContext is ready
   if (loading) {
     return (
       <DashboardLayout title="User Management" open={sidebarOpen} setOpen={setSidebarOpen}>
