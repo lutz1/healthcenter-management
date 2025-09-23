@@ -65,7 +65,6 @@ export default function Login() {
           "*": { boxSizing: "border-box" },
         }}
       />
-
       <Box
         sx={{
           height: "100%",
@@ -77,7 +76,6 @@ export default function Login() {
           backgroundSize: "cover",
           backgroundPosition: "center",
           px: 2,
-          position: "relative",
         }}
       >
         <Card
@@ -95,9 +93,6 @@ export default function Login() {
             transition: "all 0.8s ease",
             opacity: fadeIn ? 1 : 0,
             transform: fadeIn ? "translateY(0)" : "translateY(20px)",
-            "&:hover": { transform: "scale(1.02)", boxShadow: "0 12px 40px rgba(0,0,0,0.35)" },
-            position: "relative",
-            zIndex: 1,
             alignItems: "center",
           }}
         >
@@ -133,7 +128,6 @@ export default function Login() {
                   mb: 2,
                   "& .MuiFilledInput-root": {
                     background: "rgba(255,255,255,0.25)",
-                    transition: "0.3s all",
                     "&:hover": { background: "rgba(255,255,255,0.35)" },
                     "&.Mui-focused": { background: "rgba(255,255,255,0.5)" },
                   },
@@ -153,7 +147,6 @@ export default function Login() {
                   mb: 2,
                   "& .MuiFilledInput-root": {
                     background: "rgba(255,255,255,0.25)",
-                    transition: "0.3s all",
                     "&:hover": { background: "rgba(255,255,255,0.35)" },
                     "&.Mui-focused": { background: "rgba(255,255,255,0.5)" },
                   },
@@ -165,7 +158,7 @@ export default function Login() {
                 variant="contained"
                 color="primary"
                 fullWidth
-                sx={{ mt: 3, py: 1.5, fontWeight: "bold", textTransform: "none", boxShadow: "0 4px 15px rgba(0,0,0,0.2)" }}
+                sx={{ mt: 3, py: 1.5, fontWeight: "bold", textTransform: "none" }}
                 disabled={loading}
               >
                 {loading ? <CircularProgress size={24} /> : "Login"}

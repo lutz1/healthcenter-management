@@ -24,27 +24,21 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { user, role, loading } = useAuth();
-
   if (loading) return <div style={{ textAlign: "center", marginTop: "50px" }}>Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
   if (requiredRole && role !== requiredRole) return <Navigate to="/login" replace />;
-
   return children;
 };
 
 const AutoRedirect = () => {
   const { user, role, loading } = useAuth();
-
   if (loading) return <div style={{ textAlign: "center", marginTop: "50px" }}>Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
 
   switch (role) {
-    case "admin":
-      return <Navigate to="/admin" replace />;
-    case "staff":
-      return <Navigate to="/staff" replace />;
-    default:
-      return <Navigate to="/login" replace />;
+    case "admin": return <Navigate to="/admin" replace />;
+    case "staff": return <Navigate to="/staff" replace />;
+    default: return <Navigate to="/login" replace />;
   }
 };
 
