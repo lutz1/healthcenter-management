@@ -1,5 +1,5 @@
 // src/context/AuthContext.jsx
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "../modules/firebase/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -12,31 +12,27 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!firebaseUser) {
-        setUser(null);
-        setRole(null);
-        setLoading(false);
-        return;
-      }
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
 
-      try {
-        const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-        if (userDoc.exists()) {
-          const dbRole = userDoc.data().role;
-          setUser(firebaseUser);
-          setRole(dbRole === "admin" || dbRole === "staff" ? dbRole : null);
-        } else {
-          setUser(firebaseUser);
+        try {
+          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+          if (userDoc.exists()) {
+            setRole(userDoc.data().role);
+          } else {
+            setRole(null);
+          }
+        } catch (err) {
+          console.error(err);
           setRole(null);
         }
-      } catch (err) {
-        console.error("Error fetching user role:", err);
-        setUser(firebaseUser);
+      } else {
+        setUser(null);
         setRole(null);
-      } finally {
-        setLoading(false);
       }
+
+      setLoading(false);
     });
 
     return () => unsubscribe();

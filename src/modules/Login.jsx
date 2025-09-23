@@ -1,4 +1,3 @@
-// src/modules/Login.jsx
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -26,6 +25,7 @@ export default function Login() {
   const [fadeIn, setFadeIn] = useState(false);
 
   const navigate = useNavigate();
+
   useEffect(() => setFadeIn(true), []);
 
   const handleLogin = async (e) => {
@@ -34,26 +34,16 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // Firebase Auth login
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Get role from Firestore (users collection)
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (userDoc.exists()) {
         const role = userDoc.data().role;
-        console.log("Logged in as:", user.email, "with role:", role);
 
-        // Redirect logic
-        if (user.email === "robert.llemit@gmail.com") {
-          navigate("/superadmin");
-        } else if (role === "admin") {
-          navigate("/admin");
-        } else if (role === "staff") {
-          navigate("/staff");
-        } else {
-          setError("Role not assigned. Please contact administrator.");
-        }
+        if (role === "admin") navigate("/admin");
+        else if (role === "staff") navigate("/staff");
+        else setError("Role not assigned. Please contact administrator.");
       } else {
         setError("No user profile found in database.");
       }
@@ -105,72 +95,27 @@ export default function Login() {
             transition: "all 0.8s ease",
             opacity: fadeIn ? 1 : 0,
             transform: fadeIn ? "translateY(0)" : "translateY(20px)",
-            "&:hover": {
-              transform: "scale(1.02)",
-              boxShadow: "0 12px 40px rgba(0,0,0,0.35)",
-            },
+            "&:hover": { transform: "scale(1.02)", boxShadow: "0 12px 40px rgba(0,0,0,0.35)" },
             position: "relative",
             zIndex: 1,
             alignItems: "center",
           }}
         >
-          <CardContent
-            sx={{
-              flexGrow: 1,
-              width: "100%",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            {/* Logo */}
-            <Box
-              component="img"
-              src={logo}
-              alt="Logo"
-              sx={{
-                width: 250,
-                height: 100,
-                mb: 3,
-                animation: "bounce 3s infinite",
-              }}
-            />
+          <CardContent sx={{ flexGrow: 1, width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <Box component="img" src={logo} alt="Logo" sx={{ width: 250, height: 100, mb: 3, animation: "bounce 3s infinite" }} />
 
-            {/* Greeting */}
             <Box sx={{ mb: 3, textAlign: "center" }}>
-              <Typography
-                variant="h5"
-                fontWeight="bold"
-                color="primary"
-                sx={{ letterSpacing: 0.5 }}
-              >
+              <Typography variant="h5" fontWeight="bold" color="primary" sx={{ letterSpacing: 0.5 }}>
                 Greetings, Healthcare Professional
               </Typography>
-              <Typography
-                variant="body2"
-                color="textSecondary"
-                sx={{ mt: 1, fontStyle: "italic" }}
-              >
+              <Typography variant="body2" color="textSecondary" sx={{ mt: 1, fontStyle: "italic" }}>
                 Access your dashboard and manage operations efficiently
               </Typography>
             </Box>
 
-            {/* Login Form */}
-            <form
-              onSubmit={handleLogin}
-              style={{ width: "100%", position: "relative" }}
-            >
+            <form onSubmit={handleLogin} style={{ width: "100%", position: "relative" }}>
               {error && (
-                <Typography
-                  color="error"
-                  variant="body2"
-                  textAlign="center"
-                  sx={{
-                    fontWeight: "bold",
-                    mb: 2,
-                    transition: "opacity 0.5s ease-in-out",
-                  }}
-                >
+                <Typography color="error" variant="body2" textAlign="center" sx={{ fontWeight: "bold", mb: 2 }}>
                   {error}
                 </Typography>
               )}
@@ -220,18 +165,7 @@ export default function Login() {
                 variant="contained"
                 color="primary"
                 fullWidth
-                sx={{
-                  mt: 3,
-                  py: 1.5,
-                  fontWeight: "bold",
-                  textTransform: "none",
-                  boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
-                  transition: "0.3s all",
-                  "&:hover": {
-                    transform: "translateY(-2px)",
-                    boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
-                  },
-                }}
+                sx={{ mt: 3, py: 1.5, fontWeight: "bold", textTransform: "none", boxShadow: "0 4px 15px rgba(0,0,0,0.2)" }}
                 disabled={loading}
               >
                 {loading ? <CircularProgress size={24} /> : "Login"}
