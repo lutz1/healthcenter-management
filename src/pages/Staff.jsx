@@ -9,10 +9,11 @@ import { Edit, Delete } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
 
-import { db, functions } from "../modules/firebase/firebase";
+import { db } from "../modules/firebase/firebase";
 import { collection, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { httpsCallable } from "firebase/functions";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { getAuth } from "firebase/auth";
 
 export default function Staff() {
   const { role: currentUserRole, user: authUser, loading } = useAuth();
@@ -34,7 +35,7 @@ export default function Staff() {
   const [editId, setEditId] = useState(null);
   const [roleFilter, setRoleFilter] = useState("all");
 
-  // Fetch users from Firestore
+  // 🔹 Fetch users from Firestore
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -49,7 +50,7 @@ export default function Staff() {
     fetchUsers();
   }, []);
 
-  // Filter users by search and role
+  // 🔹 Filter users by search and role
   const filteredUsers = userList
     .filter((u) => roleFilter === "all" || u.role === roleFilter)
     .filter(
@@ -82,15 +83,15 @@ export default function Staff() {
 
   const handleCloseDialog = () => setOpenDialog(false);
 
-  // Save (Create/Update) user
+  // 🔹 Save (Create/Update) user
   const handleSave = async () => {
     if (loading) {
       alert("⏳ Still loading authentication. Please wait.");
       return;
     }
 
-    if (!authUser || (currentUserRole !== "superadmin" && currentUserRole !== "admin")) {
-      alert("❌ You must be logged in as Superadmin/Admin to create users.");
+    if (!authUser || currentUserRole !== "superadmin") {
+      alert("❌ You must be logged in as Superadmin to create users.");
       return;
     }
 
@@ -100,14 +101,18 @@ export default function Staff() {
         await updateDoc(doc(db, "users", editId), formData);
         setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
       } else {
-        // ✅ Call secure Cloud Function
+        // ✅ Call secure Cloud Function with auth
+        const auth = getAuth();
+        console.log("Current Auth User:", auth.currentUser?.email); // 👀 Debug log
+
+        if (!auth.currentUser) {
+          throw new Error("Not logged in.");
+        }
+
+        const functions = getFunctions(); // use default app
         const createUser = httpsCallable(functions, "createUser");
 
-        console.log("Sending data to createUser:", formData);
-
-        const result = await createUser(formData); // passes auth automatically
-        const data = result.data;
-
+        const { data } = await createUser(formData);
         setUserList([...userList, { id: data.uid, ...data }]);
       }
       handleCloseDialog();
@@ -128,7 +133,7 @@ export default function Staff() {
     }
   };
 
-  // Show loading state until AuthContext is ready
+  // 🔹 Show loading state until AuthContext is ready
   if (loading) {
     return (
       <DashboardLayout title="User Management" open={sidebarOpen} setOpen={setSidebarOpen}>
@@ -156,7 +161,7 @@ export default function Staff() {
         >
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
             <Typography variant="h4">User Management</Typography>
-            {(currentUserRole === "superadmin" || currentUserRole === "admin") && (
+            {currentUserRole === "superadmin" && (
               <motion.div whileHover={{ scale: 1.05 }}>
                 <Button variant="contained" color="primary" onClick={() => handleOpenDialog()}>
                   + Create User

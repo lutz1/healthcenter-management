@@ -1,3 +1,4 @@
+// src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "../modules/firebase/firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -12,25 +13,27 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
+      try {
+        if (currentUser) {
+          setUser(currentUser);
 
-        try {
           const userDoc = await getDoc(doc(db, "users", currentUser.uid));
           if (userDoc.exists()) {
-            setRole(userDoc.data().role || null);
+            setRole(userDoc.data().role || "staff");
           } else {
-            setRole(null);
+            console.warn("User doc not found");
+            setRole("staff");
           }
-        } catch (err) {
-          console.error(err);
+        } else {
+          setUser(null);
           setRole(null);
         }
-      } else {
-        setUser(null);
-        setRole(null);
+      } catch (err) {
+        console.error("Error fetching user doc:", err);
+        setRole("staff");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
