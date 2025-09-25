@@ -6,9 +6,6 @@ import {
   CardContent,
   Typography,
   Box,
-  List,
-  ListItem,
-  ListItemText,
   CircularProgress,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
@@ -93,11 +90,7 @@ export default function SuperAdminDashboard() {
     { text: "System Logs", icon: <SecurityIcon /> },
   ];
 
-  const activityLogs = [
-    { id: 1, message: "Admin John updated Staff Records", timestamp: "2025-09-20 10:32 AM" },
-    { id: 2, message: "Admin Maria added a new Patient", timestamp: "2025-09-20 09:45 AM" },
-    { id: 3, message: "System backup completed", timestamp: "2025-09-19 11:10 PM" },
-  ];
+  
 
   return (
     <DashboardLayout title="Super Admin Dashboard" menuItems={menuItems}>
@@ -178,22 +171,7 @@ export default function SuperAdminDashboard() {
         </Grid>
 
         {/* Admin Activity Logs */}
-        <Grid item xs={12} md={4}>
-          <Card sx={{ ...glassStyle, height: 350 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Admin Activity
-              </Typography>
-              <List dense>
-                {activityLogs.map((log) => (
-                  <ListItem key={log.id} divider>
-                    <ListItemText primary={log.message} secondary={log.timestamp} />
-                  </ListItem>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
+        
       </Grid>
     </DashboardLayout>
   );
