@@ -191,7 +191,8 @@ export default function SuperAdminDashboard() {
 
   // Load boundary GeoJSON
   useEffect(() => {
-    fetch("/visayan_village.geojson")
+    const url = process.env.PUBLIC_URL + "/visayan_village.geojson"; // ✅ GitHub Pages safe
+    fetch(url)
       .then((res) => (res.ok ? res.json() : Promise.reject("GeoJSON not found")))
       .then((data) => setGeoJsonData(data))
       .catch((err) => {
@@ -287,7 +288,7 @@ export default function SuperAdminDashboard() {
       <Grid container spacing={3} justifyContent="center" alignItems="flex-start">
         {/* Stats Cards */}
         <Grid item xs={12} container spacing={3} justifyContent="center">
-          {[
+          {[ 
             { icon: <GroupIcon color="primary" />, title: "Staff Overview", value: 25 },
             { icon: <PeopleIcon color="secondary" />, title: "Patient Overview", value: 540 },
             { icon: <AssignmentIcon color="success" />, title: "Service Forms", value: 120 },
