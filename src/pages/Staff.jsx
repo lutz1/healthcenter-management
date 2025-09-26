@@ -1,4 +1,3 @@
-// src/pages/Staff.jsx
 import React, { useState, useEffect } from "react";
 import {
   Typography, Box, Button, TextField, Table, TableBody, TableCell,
@@ -9,11 +8,11 @@ import { Edit, Delete } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
 
-import { db } from "../modules/firebase/firebase";
-import { collection, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
+// ✅ Always import shared instances
+import { db, auth, functions } from "../modules/firebase/firebase";
+import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { getFunctions, httpsCallable } from "firebase/functions";
-import { getAuth } from "firebase/auth";
+import { httpsCallable } from "firebase/functions";
 
 export default function Staff() {
   const { role: currentUserRole, user: authUser, loading } = useAuth();
@@ -35,13 +34,12 @@ export default function Staff() {
   const [editId, setEditId] = useState(null);
   const [roleFilter, setRoleFilter] = useState("all");
 
-  // 🔹 Fetch users from Firestore
+  // 🔹 Fetch users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const snapshot = await getDocs(collection(db, "users"));
         let data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        data = data.filter((u) => u.role !== "superadmin"); // exclude superadmins
         setUserList(data);
       } catch (err) {
         console.error("Error fetching users:", err);
@@ -50,8 +48,9 @@ export default function Staff() {
     fetchUsers();
   }, []);
 
-  // 🔹 Filter users by search and role
+  // 🔹 Filter users (exclude special admin from list)
   const filteredUsers = userList
+    .filter((u) => u.email !== "robert.llemit@gmail.com")
     .filter((u) => roleFilter === "all" || u.role === roleFilter)
     .filter(
       (u) =>
@@ -83,57 +82,78 @@ export default function Staff() {
 
   const handleCloseDialog = () => setOpenDialog(false);
 
-  // 🔹 Save (Create/Update) user
-  const handleSave = async () => {
-    if (loading) {
-      alert("⏳ Still loading authentication. Please wait.");
-      return;
+ // 🔹 Save user
+const handleSave = async () => {
+  console.log("🔍 authUser:", authUser);
+  console.log("🔍 auth.currentUser:", auth.currentUser);
+
+  if (loading) {
+    alert("⏳ Still loading authentication. Please wait.");
+    return;
+  }
+
+  if (!authUser || currentUserRole !== "admin") {
+    alert("❌ Unauthorized. Only admins can create/update users.");
+    return;
+  }
+
+  try {
+    if (editId) {
+      // Update Firestore directly for edits
+      await updateDoc(doc(db, "users", editId), formData);
+      setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
+    } else {
+      // 🔹 Create user through callable function
+      const createUser = httpsCallable(functions, "createUser");
+      const { data } = await createUser(formData);
+
+      setUserList([...userList, { id: data.uid, ...data }]);
     }
 
-    if (!authUser || currentUserRole !== "superadmin") {
-      alert("❌ You must be logged in as Superadmin to create users.");
-      return;
-    }
+    handleCloseDialog();
+  } catch (err) {
+    console.error("❌ Error saving user:", err);
+    alert("Error: " + err.message);
+  }
+};
 
-    try {
-      if (editId) {
-        // Update Firestore
-        await updateDoc(doc(db, "users", editId), formData);
-        setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
-      } else {
-        // ✅ Call secure Cloud Function with auth
-        const auth = getAuth();
-        console.log("Current Auth User:", auth.currentUser?.email); // 👀 Debug log
-
-        if (!auth.currentUser) {
-          throw new Error("Not logged in.");
-        }
-
-        const functions = getFunctions(); // use default app
-        const createUser = httpsCallable(functions, "createUser");
-
-        const { data } = await createUser(formData);
-        setUserList([...userList, { id: data.uid, ...data }]);
-      }
-      handleCloseDialog();
-    } catch (err) {
-      console.error("Error saving user:", err);
-      alert("Error: " + err.message);
-    }
-  };
-
+  // 🔹 Delete user (Auth + Firestore via cloud function)
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
-      await deleteDoc(doc(db, "users", id));
+      const deleteUser = httpsCallable(functions, "deleteUser");
+      await deleteUser({ uid: id });
+
       setUserList(userList.filter((u) => u.id !== id));
     } catch (err) {
-      console.error("Error deleting user:", err);
+      console.error("❌ Error deleting user:", err);
       alert("Error: " + err.message);
     }
   };
 
-  // 🔹 Show loading state until AuthContext is ready
+  // 🔹 Test callable function
+const handleTestCallable = async () => {
+  console.log("🔍 Running test callable...");
+  console.log("authUser:", authUser);
+  console.log("auth.currentUser:", auth.currentUser);
+
+  try {
+    const testFn = httpsCallable(functions, "createUser");
+    const result = await testFn({
+      email: "dummyuser@test.com",
+      password: "dummy123",
+      firstName: "Dummy",
+      lastName: "User",
+      role: "staff",
+    });
+    console.log("✅ Callable success:", result.data);
+    alert("Test callable succeeded: " + JSON.stringify(result.data, null, 2));
+  } catch (err) {
+    console.error("❌ Callable error:", err);
+    alert("Callable error: " + err.message);
+  }
+};
+
   if (loading) {
     return (
       <DashboardLayout title="User Management" open={sidebarOpen} setOpen={setSidebarOpen}>
@@ -141,6 +161,8 @@ export default function Staff() {
       </DashboardLayout>
     );
   }
+
+  const isSpecialAdmin = authUser?.email === "robert.llemit@gmail.com";
 
   return (
     <DashboardLayout title="User Management" open={sidebarOpen} setOpen={setSidebarOpen}>
@@ -161,15 +183,22 @@ export default function Staff() {
         >
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
             <Typography variant="h4">User Management</Typography>
-            {currentUserRole === "superadmin" && (
-              <motion.div whileHover={{ scale: 1.05 }}>
-                <Button variant="contained" color="primary" onClick={() => handleOpenDialog()}>
-                  + Create User
-                </Button>
-              </motion.div>
-            )}
+            <Box display="flex" gap={2}>
+              {currentUserRole === "admin" && (
+                <motion.div whileHover={{ scale: 1.05 }}>
+                  <Button variant="contained" color="primary" onClick={() => handleOpenDialog()}>
+                    + Create User
+                  </Button>
+                </motion.div>
+              )}
+              {/* 🔹 Test Callable Button */}
+              <Button variant="outlined" color="secondary" onClick={handleTestCallable}>
+                🔍 Test Callable
+              </Button>
+            </Box>
           </Box>
 
+          {/* Search + Filter */}
           <Box display="flex" gap={2} mb={2}>
             <TextField
               label="Search"
@@ -191,6 +220,7 @@ export default function Staff() {
             </TextField>
           </Box>
 
+          {/* Users Table */}
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
@@ -236,6 +266,7 @@ export default function Staff() {
             </Table>
           </TableContainer>
 
+          {/* Create/Edit User Dialog */}
           <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="sm">
             <DialogTitle>{editId ? "Edit User" : "Create User"}</DialogTitle>
             <DialogContent>
@@ -283,7 +314,6 @@ export default function Staff() {
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
-
               <TextField
                 select
                 label="Role"
@@ -292,10 +322,9 @@ export default function Staff() {
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               >
-                {currentUserRole === "superadmin" && <MenuItem value="admin">Admin</MenuItem>}
+                {isSpecialAdmin && <MenuItem value="admin">Admin</MenuItem>}
                 <MenuItem value="staff">Staff</MenuItem>
               </TextField>
-
               {!editId && (
                 <TextField
                   label="Password"

@@ -1,8 +1,8 @@
 // src/modules/firebase/firebase.js
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getFunctions } from "firebase/functions";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -13,13 +13,30 @@ const firebaseConfig = {
   appId: process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
+// Initialize Firebase app
 const app = initializeApp(firebaseConfig);
 
-// ✅ Export these for use everywhere
+// Auth instance
 const auth = getAuth(app);
+
+// Firestore instance
 const db = getFirestore(app);
 
-// ✅ Cloud Functions (this automatically attaches the ID token of the logged-in user)
-const functions = getFunctions(app, "us-central1");
+// Functions instance
+const functions = getFunctions(app, "us-central1"); // deployed region
 
-export { db, auth, functions };
+// 🔹 Connect to emulators if running on localhost
+if (window.location.hostname === "localhost") {
+  console.log("⚡ Connecting to Firebase emulators...");
+
+  // Firestore emulator
+  connectFirestoreEmulator(db, "localhost", 8080);
+
+  // Functions emulator
+  connectFunctionsEmulator(functions, "localhost", 5001);
+
+  // Optional: Auth emulator
+  auth.useEmulator("http://localhost:9099/");
+}
+
+export { auth, db, functions };
