@@ -48,7 +48,6 @@ export default function Staff() {
     fetchUsers();
   }, []);
 
-  // 🔹 Filter users (exclude special admin from list)
   const filteredUsers = userList
     .filter((u) => u.email !== "robert.llemit@gmail.com")
     .filter((u) => roleFilter === "all" || u.role === roleFilter)
@@ -82,45 +81,57 @@ export default function Staff() {
 
   const handleCloseDialog = () => setOpenDialog(false);
 
- // 🔹 Save user
-const handleSave = async () => {
-  console.log("🔍 authUser:", authUser);
-  console.log("🔍 auth.currentUser:", auth.currentUser);
+  // 🔹 Save user
+  const handleSave = async () => {
+    console.log("🔍 authUser:", authUser);
+    console.log("🔍 auth.currentUser:", auth.currentUser);
 
-  if (loading) {
-    alert("⏳ Still loading authentication. Please wait.");
-    return;
-  }
-
-  if (!authUser || currentUserRole !== "admin") {
-    alert("❌ Unauthorized. Only admins can create/update users.");
-    return;
-  }
-
-  try {
-    if (editId) {
-      // Update Firestore directly for edits
-      await updateDoc(doc(db, "users", editId), formData);
-      setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
-    } else {
-      // 🔹 Create user through callable function
-      const createUser = httpsCallable(functions, "createUser");
-      const { data } = await createUser(formData);
-
-      setUserList([...userList, { id: data.uid, ...data }]);
+    if (loading) {
+      alert("⏳ Still loading authentication. Please wait.");
+      return;
     }
 
-    handleCloseDialog();
-  } catch (err) {
-    console.error("❌ Error saving user:", err);
-    alert("Error: " + err.message);
-  }
-};
+    if (!authUser || currentUserRole !== "admin") {
+      alert("❌ Unauthorized. Only admins can create/update users.");
+      return;
+    }
 
-  // 🔹 Delete user (Auth + Firestore via cloud function)
+    try {
+      if (editId) {
+        // Update Firestore directly for edits
+        await updateDoc(doc(db, "users", editId), formData);
+        setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
+      } else {
+        // 🔹 Create user through callable function with ID token
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error("No authenticated user found.");
+
+        const token = await currentUser.getIdToken(true); // force refresh token
+        console.log("✅ Using ID token for callable:", token.substring(0, 20) + "...");
+
+        const createUser = httpsCallable(functions, "createUser");
+        const { data } = await createUser(formData); // token is automatically attached in callable functions
+
+        setUserList([...userList, { id: data.uid, ...data }]);
+      }
+
+      handleCloseDialog();
+    } catch (err) {
+      console.error("❌ Error saving user:", err);
+      alert("Error: " + err.message);
+    }
+  };
+
+  // 🔹 Delete user
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error("No authenticated user found.");
+
+      const token = await currentUser.getIdToken(true);
+      console.log("✅ Using ID token for delete callable:", token.substring(0, 20) + "...");
+
       const deleteUser = httpsCallable(functions, "deleteUser");
       await deleteUser({ uid: id });
 
@@ -134,15 +145,14 @@ const handleSave = async () => {
   // 🔹 Test function button
   const handleTestCallable = async () => {
     console.log("🔍 Running test callable...");
-    console.log("authUser:", authUser);
-    console.log("auth.currentUser:", auth.currentUser);
-
-    if (auth.currentUser) {
-      const token = await auth.currentUser.getIdToken();
-      console.log("✅ ID Token:", token.substring(0, 20) + "...");
-    } else {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
       console.warn("⚠️ No auth.currentUser detected!");
+      return;
     }
+
+    const token = await currentUser.getIdToken();
+    console.log("✅ ID Token:", token.substring(0, 20) + "...");
 
     try {
       const testFn = httpsCallable(functions, "createUser");
@@ -196,7 +206,6 @@ const handleSave = async () => {
                   </Button>
                 </motion.div>
               )}
-              {/* 🔹 Test Callable Button */}
               <Button variant="outlined" color="secondary" onClick={handleTestCallable}>
                 🔍 Test Callable
               </Button>
