@@ -1,7 +1,7 @@
 // src/App.jsx
 import React from "react";
 import { ThemeProvider } from "@mui/material/styles";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom"; // ✅ use HashRouter
 import theme from "./theme";
 
 import AdminDashboard from "./modules/AdminDashboard";
@@ -58,7 +58,7 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <AuthProvider>
-        <BrowserRouter>
+        <HashRouter> {/* ✅ replaced BrowserRouter with HashRouter */}
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/" element={<AutoRedirect />} />
@@ -127,9 +127,10 @@ function App() {
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </BrowserRouter>
+        </HashRouter>
       </AuthProvider>
     </ThemeProvider>
   );
 }
+
 export default App;
