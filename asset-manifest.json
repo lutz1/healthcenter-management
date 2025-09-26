@@ -1,0 +1,18 @@
+{
+  "files": {
+    "main.css": "/lutz1/healthcenter-management.git/static/css/main.323d7611.css",
+    "main.js": "/lutz1/healthcenter-management.git/static/js/main.e582cb83.js",
+    "static/js/453.a08f1f75.chunk.js": "/lutz1/healthcenter-management.git/static/js/453.a08f1f75.chunk.js",
+    "static/media/bg2.png": "/lutz1/healthcenter-management.git/static/media/bg2.97ea778bb7b47c9ebf72.png",
+    "static/media/bg1.png": "/lutz1/healthcenter-management.git/static/media/bg1.08acc719862c34e2d2e3.png",
+    "static/media/log.png": "/lutz1/healthcenter-management.git/static/media/log.3613a0cceaf98716264f.png",
+    "index.html": "/lutz1/healthcenter-management.git/index.html",
+    "main.323d7611.css.map": "/lutz1/healthcenter-management.git/static/css/main.323d7611.css.map",
+    "main.e582cb83.js.map": "/lutz1/healthcenter-management.git/static/js/main.e582cb83.js.map",
+    "453.a08f1f75.chunk.js.map": "/lutz1/healthcenter-management.git/static/js/453.a08f1f75.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.323d7611.css",
+    "static/js/main.e582cb83.js"
+  ]
+}
