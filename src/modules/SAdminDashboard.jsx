@@ -330,26 +330,26 @@ export default function SuperAdminDashboard() {
                       />
 
                       {/* Boundary */}
-                      {geoJsonData ? (
-                        <>
-                          <GeoJSON
-                            data={geoJsonData}
-                            style={{
-                              color: "red",
-                              weight: 3,
-                              fillOpacity: 0,
-                              dashArray: "8, 8",
-                            }}
-                            onEachFeature={(feature, layer) => {
-                              layer.bindPopup("Visayan Village");
-                            }}
-                          />
-                          <FitBounds geoJsonData={geoJsonData} />
-                        </>
-                      ) : (
-                        <Marker position={center}>
-                          <Popup>Boundary not loaded</Popup>
-                        </Marker>
+{geoJsonData ? (
+  <>
+    <GeoJSON
+      data={geoJsonData}
+      style={(feature) => ({
+        color: "red",       // border color
+        weight: 3,          // border thickness
+        fillOpacity: 0,     // transparent fill
+        dashArray: "8, 8",  // dotted line
+      })}
+      onEachFeature={(feature, layer) => {
+        layer.bindPopup("Visayan Village");
+      }}
+    />
+    <FitBounds geoJsonData={geoJsonData} />
+  </>
+) : (
+  <Marker position={center}>
+    <Popup>Boundary not loaded</Popup>
+  </Marker>
                       )}
 
                       {/* Patient markers */}
