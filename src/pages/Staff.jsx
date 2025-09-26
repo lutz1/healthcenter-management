@@ -131,28 +131,33 @@ const handleSave = async () => {
     }
   };
 
-  // 🔹 Test callable function
-const handleTestCallable = async () => {
-  console.log("🔍 Running test callable...");
-  console.log("authUser:", authUser);
-  console.log("auth.currentUser:", auth.currentUser);
+  // 🔹 Test function button
+  const handleTestCallable = async () => {
+    console.log("🔍 Running test callable...");
+    console.log("authUser:", authUser);
+    console.log("auth.currentUser:", auth.currentUser);
 
-  try {
-    const testFn = httpsCallable(functions, "createUser");
-    const result = await testFn({
-      email: "dummyuser@test.com",
-      password: "dummy123",
-      firstName: "Dummy",
-      lastName: "User",
-      role: "staff",
-    });
-    console.log("✅ Callable success:", result.data);
-    alert("Test callable succeeded: " + JSON.stringify(result.data, null, 2));
-  } catch (err) {
-    console.error("❌ Callable error:", err);
-    alert("Callable error: " + err.message);
-  }
-};
+    if (auth.currentUser) {
+      const token = await auth.currentUser.getIdToken();
+      console.log("✅ ID Token:", token.substring(0, 20) + "...");
+    } else {
+      console.warn("⚠️ No auth.currentUser detected!");
+    }
+
+    try {
+      const testFn = httpsCallable(functions, "createUser");
+      const result = await testFn({
+        email: "dummyuser@test.com",
+        password: "dummy123",
+        firstName: "Dummy",
+        lastName: "User",
+        role: "staff",
+      });
+      console.log("✅ Callable success:", result.data);
+    } catch (err) {
+      console.error("❌ Callable error:", err);
+    }
+  };
 
   if (loading) {
     return (
