@@ -1,3 +1,4 @@
+// src/pages/Staff.jsx
 import React, { useState, useEffect } from "react";
 import {
   Typography, Box, Button, TextField, Table, TableBody, TableCell,
@@ -8,11 +9,10 @@ import { Edit, Delete } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
 
-// ✅ Always import shared instances
-import { db, auth, functions } from "../modules/firebase/firebase";
+import { db, auth,} from "../modules/firebase/firebase";
 import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { httpsCallable } from "firebase/functions";
+import { httpsCallable, getFunctions } from "firebase/functions";
 
 export default function Staff() {
   const { role: currentUserRole, user: authUser, loading } = useAuth();
@@ -34,12 +34,12 @@ export default function Staff() {
   const [editId, setEditId] = useState(null);
   const [roleFilter, setRoleFilter] = useState("all");
 
-  // 🔹 Fetch users
+  // Fetch users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const snapshot = await getDocs(collection(db, "users"));
-        let data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         setUserList(data);
       } catch (err) {
         console.error("Error fetching users:", err);
@@ -81,36 +81,30 @@ export default function Staff() {
 
   const handleCloseDialog = () => setOpenDialog(false);
 
-  // 🔹 Save user
+  // Save user
   const handleSave = async () => {
-    console.log("🔍 authUser:", authUser);
-    console.log("🔍 auth.currentUser:", auth.currentUser);
-
     if (loading) {
       alert("⏳ Still loading authentication. Please wait.");
       return;
     }
 
-    if (!authUser || currentUserRole !== "admin") {
+    if (!auth.currentUser || currentUserRole !== "admin") {
       alert("❌ Unauthorized. Only admins can create/update users.");
       return;
     }
 
     try {
       if (editId) {
-        // Update Firestore directly for edits
+        // Update Firestore for edits
         await updateDoc(doc(db, "users", editId), formData);
         setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
       } else {
-        // 🔹 Create user through callable function with ID token
-        const currentUser = auth.currentUser;
-        if (!currentUser) throw new Error("No authenticated user found.");
+        // 🔹 Safe callable with region
+        const functionsUs = getFunctions(undefined, "us-central1");
+        const createUser = httpsCallable(functionsUs, "createUser");
 
-        const token = await currentUser.getIdToken(true); // force refresh token
-        console.log("✅ Using ID token for callable:", token.substring(0, 20) + "...");
-
-        const createUser = httpsCallable(functions, "createUser");
-        const { data } = await createUser(formData); // token is automatically attached in callable functions
+        const result = await createUser(formData);
+        const data = result.data;
 
         setUserList([...userList, { id: data.uid, ...data }]);
       }
@@ -122,17 +116,12 @@ export default function Staff() {
     }
   };
 
-  // 🔹 Delete user
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
+
     try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) throw new Error("No authenticated user found.");
-
-      const token = await currentUser.getIdToken(true);
-      console.log("✅ Using ID token for delete callable:", token.substring(0, 20) + "...");
-
-      const deleteUser = httpsCallable(functions, "deleteUser");
+      const functionsUs = getFunctions(undefined, "us-central1");
+      const deleteUser = httpsCallable(functionsUs, "deleteUser");
       await deleteUser({ uid: id });
 
       setUserList(userList.filter((u) => u.id !== id));
@@ -142,21 +131,19 @@ export default function Staff() {
     }
   };
 
-  // 🔹 Test function button
   const handleTestCallable = async () => {
-    console.log("🔍 Running test callable...");
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      console.warn("⚠️ No auth.currentUser detected!");
+    if (!auth.currentUser) {
+      alert("⏳ Waiting for authentication...");
       return;
     }
 
-    const token = await currentUser.getIdToken();
-    console.log("✅ ID Token:", token.substring(0, 20) + "...");
+    const token = await auth.currentUser.getIdToken();
+    console.log("✅ Using ID token for callable:", token.substring(0, 20) + "...");
 
     try {
-      const testFn = httpsCallable(functions, "createUser");
-      const result = await testFn({
+      const functionsUs = getFunctions(undefined, "us-central1");
+      const createUser = httpsCallable(functionsUs, "createUser");
+      const result = await createUser({
         email: "dummyuser@test.com",
         password: "dummy123",
         firstName: "Dummy",
@@ -181,60 +168,27 @@ export default function Staff() {
 
   return (
     <DashboardLayout title="User Management" open={sidebarOpen} setOpen={setSidebarOpen}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-      >
-        <Box
-          p={3}
-          sx={{
-            backdropFilter: "blur(12px)",
-            backgroundColor: "rgba(255,255,255,0.1)",
-            borderRadius: 3,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-          }}
-        >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.6, ease: "easeOut" }}>
+        <Box p={3} sx={{ backdropFilter: "blur(12px)", backgroundColor: "rgba(255,255,255,0.1)", borderRadius: 3, boxShadow: "0 8px 32px rgba(0,0,0,0.1)" }}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
             <Typography variant="h4">User Management</Typography>
             <Box display="flex" gap={2}>
               {currentUserRole === "admin" && (
-                <motion.div whileHover={{ scale: 1.05 }}>
-                  <Button variant="contained" color="primary" onClick={() => handleOpenDialog()}>
-                    + Create User
-                  </Button>
-                </motion.div>
+                <Button variant="contained" color="primary" onClick={() => handleOpenDialog()}>+ Create User</Button>
               )}
-              <Button variant="outlined" color="secondary" onClick={handleTestCallable}>
-                🔍 Test Callable
-              </Button>
+              <Button variant="outlined" color="secondary" onClick={handleTestCallable}>🔍 Test Callable</Button>
             </Box>
           </Box>
 
-          {/* Search + Filter */}
           <Box display="flex" gap={2} mb={2}>
-            <TextField
-              label="Search"
-              variant="outlined"
-              fullWidth
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <TextField
-              select
-              label="Filter by Role"
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              sx={{ width: 200 }}
-            >
+            <TextField label="Search" variant="outlined" fullWidth value={search} onChange={(e) => setSearch(e.target.value)} />
+            <TextField select label="Filter by Role" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} sx={{ width: 200 }}>
               <MenuItem value="all">All</MenuItem>
               <MenuItem value="admin">Admin</MenuItem>
               <MenuItem value="staff">Staff</MenuItem>
             </TextField>
           </Box>
 
-          {/* Users Table */}
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
@@ -260,101 +214,38 @@ export default function Staff() {
                     <TableCell>{user.address}</TableCell>
                     <TableCell>{user.role}</TableCell>
                     <TableCell>
-                      <IconButton color="primary" onClick={() => handleOpenDialog(user)}>
-                        <Edit />
-                      </IconButton>
-                      <IconButton color="error" onClick={() => handleDelete(user.id)}>
-                        <Delete />
-                      </IconButton>
+                      <IconButton color="primary" onClick={() => handleOpenDialog(user)}><Edit /></IconButton>
+                      <IconButton color="error" onClick={() => handleDelete(user.id)}><Delete /></IconButton>
                     </TableCell>
                   </TableRow>
                 ))}
                 {filteredUsers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} align="center">
-                      No users found
-                    </TableCell>
+                    <TableCell colSpan={8} align="center">No users found</TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
           </TableContainer>
 
-          {/* Create/Edit User Dialog */}
           <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="sm">
             <DialogTitle>{editId ? "Edit User" : "Create User"}</DialogTitle>
             <DialogContent>
-              <TextField
-                label="First Name"
-                fullWidth
-                margin="dense"
-                value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-              />
-              <TextField
-                label="Last Name"
-                fullWidth
-                margin="dense"
-                value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-              />
-              <TextField
-                label="Email"
-                fullWidth
-                margin="dense"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-              <TextField
-                label="Phone"
-                fullWidth
-                margin="dense"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              />
-              <TextField
-                label="Birthdate"
-                type="date"
-                fullWidth
-                margin="dense"
-                InputLabelProps={{ shrink: true }}
-                value={formData.birthdate}
-                onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
-              />
-              <TextField
-                label="Address"
-                fullWidth
-                margin="dense"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              />
-              <TextField
-                select
-                label="Role"
-                fullWidth
-                margin="dense"
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-              >
+              <TextField label="First Name" fullWidth margin="dense" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} />
+              <TextField label="Last Name" fullWidth margin="dense" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} />
+              <TextField label="Email" fullWidth margin="dense" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+              <TextField label="Phone" fullWidth margin="dense" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
+              <TextField label="Birthdate" type="date" fullWidth margin="dense" InputLabelProps={{ shrink: true }} value={formData.birthdate} onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })} />
+              <TextField label="Address" fullWidth margin="dense" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
+              <TextField select label="Role" fullWidth margin="dense" value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })}>
                 {isSpecialAdmin && <MenuItem value="admin">Admin</MenuItem>}
                 <MenuItem value="staff">Staff</MenuItem>
               </TextField>
-              {!editId && (
-                <TextField
-                  label="Password"
-                  type="password"
-                  fullWidth
-                  margin="dense"
-                  value={formData.password || ""}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                />
-              )}
+              {!editId && <TextField label="Password" type="password" fullWidth margin="dense" value={formData.password || ""} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />}
             </DialogContent>
             <DialogActions>
               <Button onClick={handleCloseDialog}>Cancel</Button>
-              <Button onClick={handleSave} variant="contained">
-                {editId ? "Update" : "Create"}
-              </Button>
+              <Button onClick={handleSave} variant="contained">{editId ? "Update" : "Create"}</Button>
             </DialogActions>
           </Dialog>
         </Box>
