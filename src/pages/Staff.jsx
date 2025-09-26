@@ -9,10 +9,10 @@ import { Edit, Delete } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
 
-import { db, auth,} from "../modules/firebase/firebase";
+import { db, auth, functions } from "../modules/firebase/firebase";
 import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { httpsCallable, getFunctions } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
 
 export default function Staff() {
   const { role: currentUserRole, user: authUser, loading } = useAuth();
@@ -99,13 +99,10 @@ export default function Staff() {
         await updateDoc(doc(db, "users", editId), formData);
         setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
       } else {
-        // 🔹 Safe callable with region
-        const functionsUs = getFunctions(undefined, "us-central1");
-        const createUser = httpsCallable(functionsUs, "createUser");
-
+        // 🔹 Use imported functions instance
+        const createUser = httpsCallable(functions, "createUser");
         const result = await createUser(formData);
         const data = result.data;
-
         setUserList([...userList, { id: data.uid, ...data }]);
       }
 
@@ -120,10 +117,8 @@ export default function Staff() {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
 
     try {
-      const functionsUs = getFunctions(undefined, "us-central1");
-      const deleteUser = httpsCallable(functionsUs, "deleteUser");
+      const deleteUser = httpsCallable(functions, "deleteUser");
       await deleteUser({ uid: id });
-
       setUserList(userList.filter((u) => u.id !== id));
     } catch (err) {
       console.error("❌ Error deleting user:", err);
@@ -137,12 +132,8 @@ export default function Staff() {
       return;
     }
 
-    const token = await auth.currentUser.getIdToken();
-    console.log("✅ Using ID token for callable:", token.substring(0, 20) + "...");
-
     try {
-      const functionsUs = getFunctions(undefined, "us-central1");
-      const createUser = httpsCallable(functionsUs, "createUser");
+      const createUser = httpsCallable(functions, "createUser");
       const result = await createUser({
         email: "dummyuser@test.com",
         password: "dummy123",

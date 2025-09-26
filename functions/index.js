@@ -1,3 +1,4 @@
+// functions/index.js
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
@@ -17,8 +18,8 @@ exports.createUser = functions.https.onCall(async (data, context) => {
     );
   }
 
-  const requesterUid = context.auth.uid;
   const requesterEmail = context.auth.token.email;
+  const requesterUid = context.auth.uid;
 
   // ✅ Special email check
   const isSpecialAdmin = requesterEmail === "robert.llemit@gmail.com";
