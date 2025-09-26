@@ -9,10 +9,10 @@ import { Edit, Delete } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
 
-import { db, auth, functions } from "../modules/firebase/firebase";
+import { db, auth } from "../modules/firebase/firebase";
 import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { httpsCallable } from "firebase/functions";
+import { httpsCallable, getFunctions } from "firebase/functions";
 
 export default function Staff() {
   const { role: currentUserRole, user: authUser, loading } = useAuth();
@@ -81,7 +81,7 @@ export default function Staff() {
 
   const handleCloseDialog = () => setOpenDialog(false);
 
-  // Save user
+  // Save user (create or update)
   const handleSave = async () => {
     if (loading) {
       alert("⏳ Still loading authentication. Please wait.");
@@ -99,10 +99,13 @@ export default function Staff() {
         await updateDoc(doc(db, "users", editId), formData);
         setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
       } else {
-        // 🔹 Use imported functions instance
-        const createUser = httpsCallable(functions, "createUser");
+        // Create user via callable function
+        const functionsUs = getFunctions(undefined, "us-central1");
+        const createUser = httpsCallable(functionsUs, "createUser");
+
         const result = await createUser(formData);
         const data = result.data;
+
         setUserList([...userList, { id: data.uid, ...data }]);
       }
 
@@ -117,8 +120,10 @@ export default function Staff() {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
 
     try {
-      const deleteUser = httpsCallable(functions, "deleteUser");
+      const functionsUs = getFunctions(undefined, "us-central1");
+      const deleteUser = httpsCallable(functionsUs, "deleteUser");
       await deleteUser({ uid: id });
+
       setUserList(userList.filter((u) => u.id !== id));
     } catch (err) {
       console.error("❌ Error deleting user:", err);
@@ -133,7 +138,8 @@ export default function Staff() {
     }
 
     try {
-      const createUser = httpsCallable(functions, "createUser");
+      const functionsUs = getFunctions(undefined, "us-central1");
+      const createUser = httpsCallable(functionsUs, "createUser");
       const result = await createUser({
         email: "dummyuser@test.com",
         password: "dummy123",
@@ -142,8 +148,10 @@ export default function Staff() {
         role: "staff",
       });
       console.log("✅ Callable success:", result.data);
+      alert("✅ Test user created (check console).");
     } catch (err) {
       console.error("❌ Callable error:", err);
+      alert("Error calling function: " + err.message);
     }
   };
 

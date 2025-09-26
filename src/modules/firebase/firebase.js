@@ -13,29 +13,17 @@ const firebaseConfig = {
   appId: process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase app
 const app = initializeApp(firebaseConfig);
 
-// Auth instance
 const auth = getAuth(app);
-
-// Firestore instance
 const db = getFirestore(app);
+const functions = getFunctions(app, "us-central1");
 
-// Functions instance
-const functions = getFunctions(app, "us-central1"); // deployed region
-
-// 🔹 Connect to emulators if running on localhost
+// Optional: connect to local emulators if needed
 if (window.location.hostname === "localhost") {
   console.log("⚡ Connecting to Firebase emulators...");
-
-  // Firestore emulator
   connectFirestoreEmulator(db, "localhost", 8080);
-
-  // Functions emulator
   connectFunctionsEmulator(functions, "localhost", 5001);
-
-  // Optional: Auth emulator
   auth.useEmulator("http://localhost:9099/");
 }
 
