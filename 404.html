@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Redirecting...</title>
+    <script>
+      // Preserve the full path for client-side routing
+      var path = window.location.pathname;
+      var search = window.location.search;
+      var hash = window.location.hash;
+
+      // GitHub Pages serves your repo at /healthcenter-management/
+      var repoName = "/healthcenter-management"; // ✅ updated repo name
+      var redirectTo = repoName + "/index.html" + "#" + path.replace(repoName, "") + search + hash;
+
+      window.location.replace(redirectTo);
+    </script>
+  </head>
+  <body></body>
+</html>
