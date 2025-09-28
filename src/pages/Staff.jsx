@@ -131,26 +131,35 @@ export default function Staff() {
   };
 
   // 🔹 Test callable function
-  const handleTestCallable = async () => {
-    if (!auth.currentUser) {
-      alert("⏳ Waiting for authentication...");
-      return;
-    }
+const handleTestCallable = async () => {
+  console.log("Current user:", auth.currentUser);
 
-    try {
-      const createUserFn = httpsCallable(functions, "createUser");
-      const result = await createUserFn({
-        email: "dummyuser@test.com",
-        password: "dummy123",
-        firstName: "Dummy",
-        lastName: "User",
-        role: "staff",
-      });
-      console.log("✅ Callable success:", result.data);
-    } catch (err) {
-      console.error("❌ Callable error:", err);
-    }
-  };
+  if (!auth.currentUser) {
+    alert("⏳ Not signed in. Please login first.");
+    return;
+  }
+
+  try {
+    // 🔑 Force refresh ID token to ensure it's valid
+    const token = await auth.currentUser.getIdToken(true);
+    console.log("✅ ID Token acquired:", token);
+
+    const createUserFn = httpsCallable(functions, "createUser");
+    const result = await createUserFn({
+      email: "dummyuser@test.com",
+      password: "dummy123",
+      firstName: "Dummy",
+      lastName: "User",
+      role: "staff",
+    });
+
+    console.log("✅ Callable success:", result.data);
+    alert("Callable worked! Check console for response.");
+  } catch (err) {
+    console.error("❌ Callable error:", err);
+    alert("Error: " + err.message);
+  }
+};
 
   if (loading) {
     return (

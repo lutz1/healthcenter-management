@@ -11,7 +11,11 @@ import {
   GlobalStyles,
 } from "@mui/material";
 import { auth, db } from "./firebase/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  setPersistence,
+  browserLocalPersistence, // ✅ Added
+} from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
@@ -34,9 +38,18 @@ export default function Login() {
     setLoading(true);
 
     try {
+      // ✅ Ensure session persists even after refresh
+      await setPersistence(auth, browserLocalPersistence);
+
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      // ✅ Debug: log the authenticated user + ID token
+      console.log("🔑 Logged in user:", user);
+      const token = await user.getIdToken();
+      console.log("✅ ID Token:", token);
+
+      // ✅ Get Firestore role
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (userDoc.exists()) {
         const role = userDoc.data().role;
@@ -57,7 +70,7 @@ export default function Login() {
         setError("No user profile found in database.");
       }
     } catch (err) {
-      console.error(err);
+      console.error("❌ Login error:", err);
       setError("Invalid email or password. Please try again.");
     }
 
@@ -73,7 +86,6 @@ export default function Login() {
           "#root": { height: "100%" },
           "*": { boxSizing: "border-box" },
         }}
-        
       />
 
       <Box
@@ -89,8 +101,6 @@ export default function Login() {
           px: 2,
           position: "relative",
         }}
-
-
       >
         <Card
           sx={{
@@ -158,10 +168,7 @@ export default function Login() {
             </Box>
 
             {/* Login Form */}
-            <form
-              onSubmit={handleLogin}
-              style={{ width: "100%", position: "relative" }}
-            >
+            <form onSubmit={handleLogin} style={{ width: "100%", position: "relative" }}>
               {error && (
                 <Typography
                   color="error"
