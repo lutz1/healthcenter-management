@@ -5,7 +5,7 @@ import {
   TableContainer, TableHead, TableRow, Paper, IconButton,
   Dialog, DialogTitle, DialogContent, DialogActions, MenuItem
 } from "@mui/material";
-import { Edit, Delete } from "@mui/icons-material";
+import { Edit, Delete, AdminPanelSettings, People } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
 
@@ -13,7 +13,7 @@ import { db, auth, secondaryAuth } from "../firebase";
 import {
   collection, getDocs, updateDoc, doc, deleteDoc, setDoc
 } from "firebase/firestore";
-import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
 
 export default function Staff() {
@@ -23,6 +23,7 @@ export default function Staff() {
   const [userList, setUserList] = useState([]);
   const [search, setSearch] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
+  const [successDialog, setSuccessDialog] = useState({ open: false, message: "" });
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -100,6 +101,7 @@ export default function Staff() {
         // 🔹 Update Firestore document only
         await updateDoc(doc(db, "users", editId), formData);
         setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
+        setSuccessDialog({ open: true, message: "✅ User updated successfully!" });
       } else {
         // 🔹 Create new user in Firebase Auth + Firestore
         const userCred = await createUserWithEmailAndPassword(
@@ -122,6 +124,7 @@ export default function Staff() {
         await setDoc(doc(db, "users", userCred.user.uid), userData);
 
         setUserList([...userList, { id: userCred.user.uid, ...userData }]);
+        setSuccessDialog({ open: true, message: "🎉 User created successfully!" });
       }
 
       handleCloseDialog();
@@ -136,19 +139,9 @@ export default function Staff() {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
 
     try {
-      // Remove from Firestore
       await deleteDoc(doc(db, "users", id));
-
-      // (Optional) Remove from Auth
-      // ⚠️ Only works if current session has permissions
-      try {
-        const userToDelete = await auth.getUser(id);
-        await deleteUser(userToDelete);
-      } catch (authErr) {
-        console.warn("⚠️ Could not delete from Firebase Auth, only Firestore:", authErr);
-      }
-
       setUserList(userList.filter((u) => u.id !== id));
+      setSuccessDialog({ open: true, message: "🗑️ User deleted successfully!" });
     } catch (err) {
       console.error("❌ Error deleting user:", err);
       alert("Error: " + err.message);
@@ -182,6 +175,7 @@ export default function Staff() {
             boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
           }}
         >
+          {/* Header */}
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
             <Typography variant="h4">User Management</Typography>
             {currentUserRole === "admin" && (
@@ -191,6 +185,7 @@ export default function Staff() {
             )}
           </Box>
 
+          {/* Search + Filter */}
           <Box display="flex" gap={2} mb={2}>
             <TextField
               label="Search"
@@ -212,31 +207,45 @@ export default function Staff() {
             </TextField>
           </Box>
 
+          {/* User Table */}
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>First Name</TableCell>
-                  <TableCell>Last Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Phone</TableCell>
-                  <TableCell>Birthdate</TableCell>
-                  <TableCell>Address</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Action</TableCell>
+                  {["First Name", "Last Name", "Email", "Phone", "Birthdate", "Address", "Role", "Action"].map((header) => (
+                    <TableCell
+                      key={header}
+                      align="center"
+                      sx={{ fontWeight: "bold", borderBottom: "2px solid #ddd" }}
+                    >
+                      {header}
+                    </TableCell>
+                  ))}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredUsers.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell>{user.firstName}</TableCell>
-                    <TableCell>{user.lastName}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.phone}</TableCell>
-                    <TableCell>{user.birthdate}</TableCell>
-                    <TableCell>{user.address}</TableCell>
-                    <TableCell>{user.role}</TableCell>
-                    <TableCell>
+                    <TableCell align="center">{user.firstName}</TableCell>
+                    <TableCell align="center">{user.lastName}</TableCell>
+                    <TableCell align="center">{user.email}</TableCell>
+                    <TableCell align="center">{user.phone}</TableCell>
+                    <TableCell align="center">{user.birthdate}</TableCell>
+                    <TableCell align="center">{user.address}</TableCell>
+                    <TableCell align="center">
+                      {user.role === "admin" ? (
+                        <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                          <AdminPanelSettings color="primary" />
+                          <Typography variant="body2" fontWeight="bold">Admin</Typography>
+                        </Box>
+                      ) : (
+                        <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
+                          <People color="action" />
+                          <Typography variant="body2" fontWeight="bold">Staff</Typography>
+                        </Box>
+                      )}
+                    </TableCell>
+                    <TableCell align="center">
                       <IconButton color="primary" onClick={() => handleOpenDialog(user)}>
                         <Edit />
                       </IconButton>
@@ -257,6 +266,7 @@ export default function Staff() {
             </Table>
           </TableContainer>
 
+          {/* User Form Dialog */}
           <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="sm">
             <DialogTitle>{editId ? "Edit User" : "Create User"}</DialogTitle>
             <DialogContent>
@@ -330,6 +340,25 @@ export default function Staff() {
               <Button onClick={handleCloseDialog}>Cancel</Button>
               <Button onClick={handleSave} variant="contained">
                 {editId ? "Update" : "Create"}
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          {/* Success Dialog */}
+          <Dialog
+            open={successDialog.open}
+            onClose={() => setSuccessDialog({ open: false, message: "" })}
+          >
+            <DialogTitle>Success</DialogTitle>
+            <DialogContent>
+              <Typography>{successDialog.message}</Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                onClick={() => setSuccessDialog({ open: false, message: "" })}
+                autoFocus
+              >
+                OK
               </Button>
             </DialogActions>
           </Dialog>
