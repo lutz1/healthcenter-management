@@ -1,3 +1,4 @@
+// index.js
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
@@ -13,8 +14,10 @@ exports.createUser = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
   }
 
-  const { uid, token } = context.auth;
-  const email = token.email;
+  // ✅ FIXED: use context.auth.uid and context.auth.token.email
+  const uid = context.auth.uid;
+  const email = context.auth.token.email;
+
   const isSpecialAdmin = email === "robert.llemit@gmail.com";
 
   // Fetch role from Firestore
@@ -61,8 +64,10 @@ exports.deleteUser = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unauthenticated", "You must be logged in.");
   }
 
-  const { uid, token } = context.auth;
-  const email = token.email;
+  // ✅ FIXED: same change here
+  const uid = context.auth.uid;
+  const email = context.auth.token.email;
+
   const isSpecialAdmin = email === "robert.llemit@gmail.com";
 
   const requesterDoc = await db.collection("users").doc(uid).get();

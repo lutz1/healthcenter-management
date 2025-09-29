@@ -9,7 +9,7 @@ import { Edit, Delete } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
 
-import { db, auth, functions } from "../modules/firebase/firebase"; // ✅ use functions here
+import { db, auth, functions } from "../modules/firebase/firebase"; 
 import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { httpsCallable } from "firebase/functions";
@@ -81,15 +81,13 @@ export default function Staff() {
 
   const handleCloseDialog = () => setOpenDialog(false);
 
-  // 🔹 Save user
+  // 🔹 Save user (create or update)
   const handleSave = async () => {
-    // ✅ Wait until authentication is fully loaded
     if (loading || !auth.currentUser) {
       alert("⏳ Waiting for authentication. Please sign in first.");
       return;
     }
 
-    // ✅ Only admin users allowed
     if (currentUserRole !== "admin") {
       alert("❌ Unauthorized. Only admins can create/update users.");
       return;
@@ -97,12 +95,12 @@ export default function Staff() {
 
     try {
       if (editId) {
-        // 🔹 Update Firestore document for edits
+        // 🔹 Update Firestore document
         await updateDoc(doc(db, "users", editId), formData);
         setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
       } else {
-        // 🔹 Callable function automatically verifies ID token
-        const createUserFn = httpsCallable(functions, "createUser"); // ✅ Use functions from firebase.js
+        // 🔹 Call backend function to create user
+        const createUserFn = httpsCallable(functions, "createUser");
         const result = await createUserFn(formData);
         const data = result.data;
 
@@ -130,37 +128,6 @@ export default function Staff() {
     }
   };
 
-  // 🔹 Test callable function
-const handleTestCallable = async () => {
-  console.log("Current user:", auth.currentUser);
-
-  if (!auth.currentUser) {
-    alert("⏳ Not signed in. Please login first.");
-    return;
-  }
-
-  try {
-    // 🔑 Force refresh ID token to ensure it's valid
-    const token = await auth.currentUser.getIdToken(true);
-    console.log("✅ ID Token acquired:", token);
-
-    const createUserFn = httpsCallable(functions, "createUser");
-    const result = await createUserFn({
-      email: "dummyuser@test.com",
-      password: "dummy123",
-      firstName: "Dummy",
-      lastName: "User",
-      role: "staff",
-    });
-
-    console.log("✅ Callable success:", result.data);
-    alert("Callable worked! Check console for response.");
-  } catch (err) {
-    console.error("❌ Callable error:", err);
-    alert("Error: " + err.message);
-  }
-};
-
   if (loading) {
     return (
       <DashboardLayout title="User Management" open={sidebarOpen} setOpen={setSidebarOpen}>
@@ -173,21 +140,45 @@ const handleTestCallable = async () => {
 
   return (
     <DashboardLayout title="User Management" open={sidebarOpen} setOpen={setSidebarOpen}>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.6, ease: "easeOut" }}>
-        <Box p={3} sx={{ backdropFilter: "blur(12px)", backgroundColor: "rgba(255,255,255,0.1)", borderRadius: 3, boxShadow: "0 8px 32px rgba(0,0,0,0.1)" }}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
+        <Box
+          p={3}
+          sx={{
+            backdropFilter: "blur(12px)",
+            backgroundColor: "rgba(255,255,255,0.1)",
+            borderRadius: 3,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+          }}
+        >
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
             <Typography variant="h4">User Management</Typography>
-            <Box display="flex" gap={2}>
-              {currentUserRole === "admin" && (
-                <Button variant="contained" color="primary" onClick={() => handleOpenDialog()}>+ Create User</Button>
-              )}
-              <Button variant="outlined" color="secondary" onClick={handleTestCallable}>🔍 Test Callable</Button>
-            </Box>
+            {currentUserRole === "admin" && (
+              <Button variant="contained" color="primary" onClick={() => handleOpenDialog()}>
+                + Create User
+              </Button>
+            )}
           </Box>
 
           <Box display="flex" gap={2} mb={2}>
-            <TextField label="Search" variant="outlined" fullWidth value={search} onChange={(e) => setSearch(e.target.value)} />
-            <TextField select label="Filter by Role" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} sx={{ width: 200 }}>
+            <TextField
+              label="Search"
+              variant="outlined"
+              fullWidth
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <TextField
+              select
+              label="Filter by Role"
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              sx={{ width: 200 }}
+            >
               <MenuItem value="all">All</MenuItem>
               <MenuItem value="admin">Admin</MenuItem>
               <MenuItem value="staff">Staff</MenuItem>
@@ -219,14 +210,20 @@ const handleTestCallable = async () => {
                     <TableCell>{user.address}</TableCell>
                     <TableCell>{user.role}</TableCell>
                     <TableCell>
-                      <IconButton color="primary" onClick={() => handleOpenDialog(user)}><Edit /></IconButton>
-                      <IconButton color="error" onClick={() => handleDelete(user.id)}><Delete /></IconButton>
+                      <IconButton color="primary" onClick={() => handleOpenDialog(user)}>
+                        <Edit />
+                      </IconButton>
+                      <IconButton color="error" onClick={() => handleDelete(user.id)}>
+                        <Delete />
+                      </IconButton>
                     </TableCell>
                   </TableRow>
                 ))}
                 {filteredUsers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} align="center">No users found</TableCell>
+                    <TableCell colSpan={8} align="center">
+                      No users found
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -236,21 +233,77 @@ const handleTestCallable = async () => {
           <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="sm">
             <DialogTitle>{editId ? "Edit User" : "Create User"}</DialogTitle>
             <DialogContent>
-              <TextField label="First Name" fullWidth margin="dense" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} />
-              <TextField label="Last Name" fullWidth margin="dense" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} />
-              <TextField label="Email" fullWidth margin="dense" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-              <TextField label="Phone" fullWidth margin="dense" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
-              <TextField label="Birthdate" type="date" fullWidth margin="dense" InputLabelProps={{ shrink: true }} value={formData.birthdate} onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })} />
-              <TextField label="Address" fullWidth margin="dense" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
-              <TextField select label="Role" fullWidth margin="dense" value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })}>
+              <TextField
+                label="First Name"
+                fullWidth
+                margin="dense"
+                value={formData.firstName}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+              />
+              <TextField
+                label="Last Name"
+                fullWidth
+                margin="dense"
+                value={formData.lastName}
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+              />
+              <TextField
+                label="Email"
+                fullWidth
+                margin="dense"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+              <TextField
+                label="Phone"
+                fullWidth
+                margin="dense"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
+              <TextField
+                label="Birthdate"
+                type="date"
+                fullWidth
+                margin="dense"
+                InputLabelProps={{ shrink: true }}
+                value={formData.birthdate}
+                onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
+              />
+              <TextField
+                label="Address"
+                fullWidth
+                margin="dense"
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              />
+              <TextField
+                select
+                label="Role"
+                fullWidth
+                margin="dense"
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              >
                 {isSpecialAdmin && <MenuItem value="admin">Admin</MenuItem>}
                 <MenuItem value="staff">Staff</MenuItem>
               </TextField>
-              {!editId && <TextField label="Password" type="password" fullWidth margin="dense" value={formData.password || ""} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />}
+              {!editId && (
+                <TextField
+                  label="Password"
+                  type="password"
+                  fullWidth
+                  margin="dense"
+                  value={formData.password || ""}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                />
+              )}
             </DialogContent>
             <DialogActions>
               <Button onClick={handleCloseDialog}>Cancel</Button>
-              <Button onClick={handleSave} variant="contained">{editId ? "Update" : "Create"}</Button>
+              <Button onClick={handleSave} variant="contained">
+                {editId ? "Update" : "Create"}
+              </Button>
             </DialogActions>
           </Dialog>
         </Box>
