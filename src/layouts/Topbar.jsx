@@ -18,7 +18,7 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import LanguageIcon from "@mui/icons-material/Language";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useNavigate } from "react-router-dom";
-import { auth, db } from "../modules/firebase/firebase";
+import { auth, db } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 

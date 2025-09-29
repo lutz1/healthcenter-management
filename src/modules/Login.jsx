@@ -10,7 +10,7 @@ import {
   CircularProgress,
   GlobalStyles,
 } from "@mui/material";
-import { auth, db } from "./firebase/firebase";
+import { auth, db } from "../firebase";
 import {
   signInWithEmailAndPassword,
   setPersistence,

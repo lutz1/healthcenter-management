@@ -9,10 +9,12 @@ import { Edit, Delete } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import DashboardLayout from "../layouts/DashboardLayout";
 
-import { db, auth, functions } from "../modules/firebase/firebase"; 
-import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
+import { db, auth, secondaryAuth } from "../firebase";
+import {
+  collection, getDocs, updateDoc, doc, deleteDoc, setDoc
+} from "firebase/firestore";
+import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
-import { httpsCallable } from "firebase/functions";
 
 export default function Staff() {
   const { role: currentUserRole, user: authUser, loading } = useAuth();
@@ -95,16 +97,31 @@ export default function Staff() {
 
     try {
       if (editId) {
-        // 🔹 Update Firestore document
+        // 🔹 Update Firestore document only
         await updateDoc(doc(db, "users", editId), formData);
         setUserList(userList.map((u) => (u.id === editId ? { ...u, ...formData } : u)));
       } else {
-        // 🔹 Call backend function to create user
-        const createUserFn = httpsCallable(functions, "createUser");
-        const result = await createUserFn(formData);
-        const data = result.data;
+        // 🔹 Create new user in Firebase Auth + Firestore
+        const userCred = await createUserWithEmailAndPassword(
+          secondaryAuth,
+          formData.email,
+          formData.password
+        );
 
-        setUserList([...userList, { id: data.uid, ...data }]);
+        const userData = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          birthdate: formData.birthdate,
+          address: formData.address,
+          role: formData.role,
+          createdAt: new Date(),
+        };
+
+        await setDoc(doc(db, "users", userCred.user.uid), userData);
+
+        setUserList([...userList, { id: userCred.user.uid, ...userData }]);
       }
 
       handleCloseDialog();
@@ -119,8 +136,18 @@ export default function Staff() {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
 
     try {
-      const deleteUserFn = httpsCallable(functions, "deleteUser");
-      await deleteUserFn({ uid: id });
+      // Remove from Firestore
+      await deleteDoc(doc(db, "users", id));
+
+      // (Optional) Remove from Auth
+      // ⚠️ Only works if current session has permissions
+      try {
+        const userToDelete = await auth.getUser(id);
+        await deleteUser(userToDelete);
+      } catch (authErr) {
+        console.warn("⚠️ Could not delete from Firebase Auth, only Firestore:", authErr);
+      }
+
       setUserList(userList.filter((u) => u.id !== id));
     } catch (err) {
       console.error("❌ Error deleting user:", err);
