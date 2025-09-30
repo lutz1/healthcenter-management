@@ -1,13 +1,13 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import { Box } from "@mui/material";
 import theme from "./theme";
 
 // Dashboards
+import SAdminDashboard from "./modules/SAdminDashboard";
 import AdminDashboard from "./modules/AdminDashboard";
 import StaffDashboard from "./modules/StaffDashboard";
-import SAdminDashboard from "./modules/SAdminDashboard";
 import Login from "./modules/Login";
 
 // Admin Pages
@@ -21,42 +21,53 @@ import LogsHistory from "./pages/LogsHistory";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 
+// Auth Context
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
-// ✅ Loading Screen
+// Loading Screen
 const LoadingScreen = () => (
   <Box sx={{ textAlign: "center", mt: 20 }}>⏳ Loading...</Box>
 );
 
-// 🔒 Private Route wrapper
-const PrivateRoute = ({ children, requiredRole }) => {
+// PrivateRoute for role-based access
+const PrivateRoute = ({ children, allowedRoles }) => {
   const { currentUser, loading } = useAuth();
 
   if (loading) return <LoadingScreen />;
   if (!currentUser) return <Navigate to="/login" replace />;
-  if (requiredRole && currentUser.role !== requiredRole) return <Navigate to="/not-authorized" replace />;
+  if (allowedRoles && !allowedRoles.includes(currentUser.role)) return <Navigate to="/not-authorized" replace />;
 
   return children;
 };
 
-// 🔑 Login route wrapper
+// Auto redirect after login
+const AutoRedirect = () => {
+  const { currentUser, loading } = useAuth();
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (loading || !currentUser || !currentUser.role) return;
+
+    if (currentUser.role === "superadmin") navigate("/superadmin", { replace: true });
+    else if (currentUser.role === "admin") navigate("/admin", { replace: true });
+    else if (currentUser.role === "staff") navigate("/staff", { replace: true });
+  }, [currentUser, loading, navigate]);
+
+  return <LoadingScreen />;
+};
+
+// Login route wrapper
 const LoginRoute = () => {
   const { currentUser, loading } = useAuth();
 
   if (loading) return <LoadingScreen />;
-  if (currentUser?.role) return <Navigate to={`/${currentUser.role}`} replace />;
+  if (currentUser && currentUser.role) {
+    if (currentUser.role === "superadmin") return <Navigate to="/superadmin" replace />;
+    if (currentUser.role === "admin") return <Navigate to="/admin" replace />;
+    if (currentUser.role === "staff") return <Navigate to="/staff" replace />;
+  }
 
   return <Login />;
-};
-
-// 🔑 Auto redirect after login
-const AutoRedirect = () => {
-  const { currentUser, loading } = useAuth();
-
-  if (loading) return <LoadingScreen />;
-  if (!currentUser?.role) return <Navigate to="/login" replace />;
-
-  return <Navigate to={`/${currentUser.role}`} replace />;
 };
 
 function App() {
@@ -67,13 +78,15 @@ function App() {
           <Routes>
             {/* Public */}
             <Route path="/login" element={<LoginRoute />} />
+
+            {/* Auto redirect */}
             <Route path="/" element={<AutoRedirect />} />
 
             {/* Superadmin */}
             <Route
               path="/superadmin"
               element={
-                <PrivateRoute requiredRole="superadmin">
+                <PrivateRoute allowedRoles={["superadmin"]}>
                   <SAdminDashboard />
                 </PrivateRoute>
               }
@@ -83,89 +96,40 @@ function App() {
             <Route
               path="/admin"
               element={
-                <PrivateRoute requiredRole="admin">
+                <PrivateRoute allowedRoles={["admin"]}>
                   <AdminDashboard />
                 </PrivateRoute>
               }
             />
-            <Route
-              path="/management/staff"
-              element={
-                <PrivateRoute requiredRole="admin">
-                  <Staff />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/management/patients"
-              element={
-                <PrivateRoute requiredRole="admin">
-                  <Patients />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/management/events"
-              element={
-                <PrivateRoute requiredRole="admin">
-                  <Events />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/records/medical-records"
-              element={
-                <PrivateRoute requiredRole="admin">
-                  <MedicalRecords />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/records/services"
-              element={
-                <PrivateRoute requiredRole="admin">
-                  <Services />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/records/inventory"
-              element={
-                <PrivateRoute requiredRole="admin">
-                  <Inventory />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/records/logs-history"
-              element={
-                <PrivateRoute requiredRole="admin">
-                  <LogsHistory />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/analytics/reports"
-              element={
-                <PrivateRoute requiredRole="admin">
-                  <Reports />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <PrivateRoute requiredRole="admin">
-                  <Settings />
-                </PrivateRoute>
-              }
-            />
+
+            {/* Admin Pages */}
+            {[
+              { path: "/management/staff", Component: Staff },
+              { path: "/management/patients", Component: Patients },
+              { path: "/management/events", Component: Events },
+              { path: "/records/medical-records", Component: MedicalRecords },
+              { path: "/records/services", Component: Services },
+              { path: "/records/inventory", Component: Inventory },
+              { path: "/records/logs-history", Component: LogsHistory },
+              { path: "/analytics/reports", Component: Reports },
+              { path: "/settings", Component: Settings },
+            ].map(({ path, Component }) => (
+              <Route
+                key={path}
+                path={path}
+                element={
+                  <PrivateRoute allowedRoles={["admin"]}>
+                    <Component />
+                  </PrivateRoute>
+                }
+              />
+            ))}
 
             {/* Staff */}
             <Route
               path="/staff"
               element={
-                <PrivateRoute requiredRole="staff">
+                <PrivateRoute allowedRoles={["staff"]}>
                   <StaffDashboard />
                 </PrivateRoute>
               }

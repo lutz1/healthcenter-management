@@ -5,21 +5,20 @@ import { doc, getDoc } from "firebase/firestore";
 
 const AuthContext = createContext();
 
+// AuthProvider wraps the app and provides currentUser and loading state
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null); // includes role
   const [loading, setLoading] = useState(true);
 
+  // Fetch Firestore user document by uid
   const fetchUserData = async (uid) => {
     try {
       const snap = await getDoc(doc(db, "users", uid));
       if (snap.exists()) {
-        const data = snap.data();
-        console.log("fetchUserData:", uid, data);
-        return { ...data, uid }; // merge uid
-      } else {
-        console.warn("No Firestore doc for uid", uid);
-        return null;
+        return { uid, ...snap.data() }; // includes role
       }
+      console.warn("No Firestore user doc for uid:", uid);
+      return null;
     } catch (err) {
       console.error("fetchUserData error:", err);
       return null;
@@ -27,15 +26,24 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    // Listen to Firebase Auth changes
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setLoading(true);
+
       if (user) {
-        console.log("onAuthStateChanged - user:", user.uid, user.email);
+        console.log("Auth state changed - user:", user.uid, user.email);
         const userData = await fetchUserData(user.uid);
-        setCurrentUser(userData ? { ...user, role: userData.role || "staff" } : null);
+
+        // Merge Firebase Auth user object with Firestore role
+        setCurrentUser(
+          userData
+            ? { uid: user.uid, email: user.email, role: userData.role || "staff" }
+            : null
+        );
       } else {
         setCurrentUser(null);
       }
+
       setLoading(false);
     });
 
@@ -49,4 +57,5 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// Custom hook to access AuthContext
 export const useAuth = () => useContext(AuthContext);

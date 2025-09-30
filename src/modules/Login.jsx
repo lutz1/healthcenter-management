@@ -1,5 +1,5 @@
-// src/modules/Login.jsx
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Card,
@@ -10,12 +10,13 @@ import {
   CircularProgress,
   GlobalStyles,
 } from "@mui/material";
-import { auth } from "../firebase";
+import { auth, db } from "../firebase";
 import {
   signInWithEmailAndPassword,
   setPersistence,
   browserLocalPersistence,
 } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 import bgImage from "../assets/bg2.png";
 import logo from "../assets/log.png";
@@ -26,6 +27,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [fadeIn, setFadeIn] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => setFadeIn(true), []);
 
@@ -35,23 +37,40 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // 🔑 Persist session across refreshes
+      // Persist session
       await setPersistence(auth, browserLocalPersistence);
 
-      // ✅ Just sign in
+      // Sign in
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       console.log("🔑 Logged in user:", user);
 
-      // ❌ Removed redirect logic
-      // AuthContext + App.jsx (AutoRedirect) will handle navigation based on role
+      // Get user role from Firestore
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+
+      if (!userDoc.exists()) {
+        setError("User role not found. Contact admin.");
+        setLoading(false);
+        return;
+      }
+
+      const role = userDoc.data().role;
+
+      // Role-based redirects
+      if (role === "superadmin" || role === "admin") {
+        navigate("/s-admin-dashboard");
+      } else if (role === "staff") {
+        navigate("/staff-dashboard");
+      } else {
+        setError("Invalid user role.");
+      }
     } catch (err) {
       console.error("❌ Login error:", err);
       setError("Invalid email or password. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -76,7 +95,6 @@ export default function Login() {
           backgroundSize: "cover",
           backgroundPosition: "center",
           px: 2,
-          position: "relative",
         }}
       >
         <Card
@@ -94,12 +112,6 @@ export default function Login() {
             transition: "all 0.8s ease",
             opacity: fadeIn ? 1 : 0,
             transform: fadeIn ? "translateY(0)" : "translateY(20px)",
-            "&:hover": {
-              transform: "scale(1.02)",
-              boxShadow: "0 12px 40px rgba(0,0,0,0.35)",
-            },
-            position: "relative",
-            zIndex: 1,
             alignItems: "center",
           }}
         >
@@ -112,51 +124,25 @@ export default function Login() {
               alignItems: "center",
             }}
           >
-            {/* Logo */}
             <Box
               component="img"
               src={logo}
               alt="Logo"
-              sx={{
-                width: 250,
-                height: 100,
-                mb: 3,
-                animation: "bounce 3s infinite",
-              }}
+              sx={{ width: 250, height: 100, mb: 3, animation: "bounce 3s infinite" }}
             />
 
-            {/* Greeting */}
             <Box sx={{ mb: 3, textAlign: "center" }}>
-              <Typography
-                variant="h5"
-                fontWeight="bold"
-                color="primary"
-                sx={{ letterSpacing: 0.5 }}
-              >
+              <Typography variant="h5" fontWeight="bold" color="primary" sx={{ letterSpacing: 0.5 }}>
                 Greetings, Healthcare Professional
               </Typography>
-              <Typography
-                variant="body2"
-                color="textSecondary"
-                sx={{ mt: 1, fontStyle: "italic" }}
-              >
+              <Typography variant="body2" color="textSecondary" sx={{ mt: 1, fontStyle: "italic" }}>
                 Access your dashboard and manage operations efficiently
               </Typography>
             </Box>
 
-            {/* Login Form */}
-            <form onSubmit={handleLogin} style={{ width: "100%", position: "relative" }}>
+            <form onSubmit={handleLogin} style={{ width: "100%" }}>
               {error && (
-                <Typography
-                  color="error"
-                  variant="body2"
-                  textAlign="center"
-                  sx={{
-                    fontWeight: "bold",
-                    mb: 2,
-                    transition: "opacity 0.5s ease-in-out",
-                  }}
-                >
+                <Typography color="error" variant="body2" textAlign="center" sx={{ fontWeight: "bold", mb: 2 }}>
                   {error}
                 </Typography>
               )}
@@ -180,6 +166,7 @@ export default function Login() {
                   },
                 }}
               />
+
               <TextField
                 label="Password"
                 type="password"
@@ -206,18 +193,7 @@ export default function Login() {
                 variant="contained"
                 color="primary"
                 fullWidth
-                sx={{
-                  mt: 3,
-                  py: 1.5,
-                  fontWeight: "bold",
-                  textTransform: "none",
-                  boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
-                  transition: "0.3s all",
-                  "&:hover": {
-                    transform: "translateY(-2px)",
-                    boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
-                  },
-                }}
+                sx={{ mt: 3, py: 1.5, fontWeight: "bold", textTransform: "none" }}
                 disabled={loading}
               >
                 {loading ? <CircularProgress size={24} /> : "Login"}

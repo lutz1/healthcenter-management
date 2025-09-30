@@ -1,9 +1,12 @@
-import React from "react";
-import { Grid, Card, CardContent, Typography, Box } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { Grid, Card, CardContent, Typography, Box, CircularProgress } from "@mui/material";
 import DashboardLayout from "../layouts/DashboardLayout";
 import PeopleIcon from "@mui/icons-material/People";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const glassStyle = {
   background: "rgba(255, 255, 255, 0.2)",
@@ -15,6 +18,31 @@ const glassStyle = {
 };
 
 export default function StaffDashboard() {
+  const { currentUser, loading } = useAuth();
+  const navigate = useNavigate();
+  const [time, setTime] = useState(new Date());
+
+  // Real-time clock
+  useEffect(() => {
+    const interval = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Auth guard
+  useEffect(() => {
+    if (!loading && (!currentUser || currentUser.role !== "staff")) {
+      navigate("/login");
+    }
+  }, [currentUser, loading, navigate]);
+
+  if (loading || !currentUser) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   const menuItems = [
     { text: "Patient Monitoring", icon: <PeopleIcon /> },
     { text: "Service Forms", icon: <AssignmentIcon /> },
@@ -23,51 +51,41 @@ export default function StaffDashboard() {
 
   return (
     <DashboardLayout title="Staff Dashboard (BHW)" menuItems={menuItems}>
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} px={2}>
+        <Typography variant="h6" fontWeight="bold">
+          Welcome, {currentUser.name || currentUser.email} 👋
+        </Typography>
+        <Box display="flex" alignItems="center" gap={1.5}>
+          <AccessTimeIcon fontSize="medium" color="primary" />
+          <Box textAlign="right">
+            <Typography variant="body1" fontWeight="bold">{time.toLocaleTimeString()}</Typography>
+            <Typography variant="body2" color="textSecondary">{time.toLocaleDateString()}</Typography>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Stats */}
       <Grid container spacing={3}>
-        {/* Patient Monitoring */}
-        <Grid item xs={12} md={6} lg={4}>
-          <Card sx={glassStyle}>
-            <CardContent>
-              <Box display="flex" gap={2} alignItems="center">
-                <PeopleIcon fontSize="large" color="secondary" />
-                <Box>
-                  <Typography variant="h6">Patient Monitoring</Typography>
-                  <Typography variant="h5" fontWeight="bold">120</Typography>
+        {[ 
+          { icon: <PeopleIcon fontSize="large" color="secondary" />, title: "Patient Monitoring", value: 120 },
+          { icon: <AssignmentIcon fontSize="large" color="success" />, title: "Service Forms", value: 35 },
+          { icon: <LocalHospitalIcon fontSize="large" color="error" />, title: "Catered Patients", value: 98 },
+        ].map((item, i) => (
+          <Grid item xs={12} md={6} lg={4} key={i}>
+            <Card sx={glassStyle}>
+              <CardContent>
+                <Box display="flex" gap={2} alignItems="center">
+                  {item.icon}
+                  <Box>
+                    <Typography variant="h6">{item.title}</Typography>
+                    <Typography variant="h5" fontWeight="bold">{item.value}</Typography>
+                  </Box>
                 </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Service Forms */}
-        <Grid item xs={12} md={6} lg={4}>
-          <Card sx={glassStyle}>
-            <CardContent>
-              <Box display="flex" gap={2} alignItems="center">
-                <AssignmentIcon fontSize="large" color="success" />
-                <Box>
-                  <Typography variant="h6">Service Forms</Typography>
-                  <Typography variant="h5" fontWeight="bold">35</Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Catered Patients */}
-        <Grid item xs={12} md={6} lg={4}>
-          <Card sx={glassStyle}>
-            <CardContent>
-              <Box display="flex" gap={2} alignItems="center">
-                <LocalHospitalIcon fontSize="large" color="error" />
-                <Box>
-                  <Typography variant="h6">Catered Patients</Typography>
-                  <Typography variant="h5" fontWeight="bold">98</Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
       </Grid>
     </DashboardLayout>
   );
