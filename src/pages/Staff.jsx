@@ -1,9 +1,23 @@
 // src/pages/Staff.jsx
 import React, { useState, useEffect } from "react";
 import {
-  Typography, Box, Button, TextField, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Paper, IconButton,
-  Dialog, DialogTitle, DialogContent, DialogActions, MenuItem
+  Typography,
+  Box,
+  Button,
+  TextField,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  MenuItem,
 } from "@mui/material";
 import { Edit, Delete, AdminPanelSettings, People } from "@mui/icons-material";
 import { motion } from "framer-motion";
@@ -11,7 +25,14 @@ import DashboardLayout from "../layouts/DashboardLayout";
 
 import { db, auth, secondaryAuth } from "../firebase";
 import {
-  collection, getDocs, updateDoc, doc, deleteDoc, setDoc
+  collection,
+  getDocs,
+  updateDoc,
+  doc,
+  deleteDoc,
+  setDoc,
+  query,
+  where,
 } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
@@ -23,7 +44,10 @@ export default function Staff() {
   const [userList, setUserList] = useState([]);
   const [search, setSearch] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
-  const [successDialog, setSuccessDialog] = useState({ open: false, message: "" });
+  const [successDialog, setSuccessDialog] = useState({
+    open: false,
+    message: "",
+  });
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -37,22 +61,40 @@ export default function Staff() {
   const [editId, setEditId] = useState(null);
   const [roleFilter, setRoleFilter] = useState("all");
 
+  const isSpecialAdmin = authUser?.email === "robert.llemit@gmail.com";
+
   // 🔹 Fetch users from Firestore
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const snapshot = await getDocs(collection(db, "users"));
+        let q;
+
+        if (isSpecialAdmin) {
+          // Special admin sees ALL users
+          q = collection(db, "users");
+        } else if (currentUserRole === "admin") {
+          // Normal admin only sees staff they created
+          q = query(collection(db, "users"), where("createdBy", "==", authUser.uid));
+        } else {
+          // Staff cannot view others
+          setUserList([]);
+          return;
+        }
+
+        const snapshot = await getDocs(q);
         const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         setUserList(data);
       } catch (err) {
         console.error("Error fetching users:", err);
       }
     };
-    fetchUsers();
-  }, []);
+    if (!loading && authUser) {
+      fetchUsers();
+    }
+  }, [loading, authUser, currentUserRole, isSpecialAdmin]);
 
   const filteredUsers = userList
-    .filter((u) => u.email !== "robert.llemit@gmail.com")
+    .filter((u) => (isSpecialAdmin ? u.email !== "robert.llemit@gmail.com" : true))
     .filter((u) => roleFilter === "all" || u.role === roleFilter)
     .filter(
       (u) =>
@@ -119,6 +161,7 @@ export default function Staff() {
           address: formData.address,
           role: formData.role,
           createdAt: new Date(),
+          createdBy: authUser.uid, // Track who created this user
         };
 
         await setDoc(doc(db, "users", userCred.user.uid), userData);
@@ -150,16 +193,24 @@ export default function Staff() {
 
   if (loading) {
     return (
-      <DashboardLayout title="User Management" open={sidebarOpen} setOpen={setSidebarOpen}>
-        <Box p={3}><Typography>Loading authentication...</Typography></Box>
+      <DashboardLayout
+        title="User Management"
+        open={sidebarOpen}
+        setOpen={setSidebarOpen}
+      >
+        <Box p={3}>
+          <Typography>Loading authentication...</Typography>
+        </Box>
       </DashboardLayout>
     );
   }
 
-  const isSpecialAdmin = authUser?.email === "robert.llemit@gmail.com";
-
   return (
-    <DashboardLayout title="User Management" open={sidebarOpen} setOpen={setSidebarOpen}>
+    <DashboardLayout
+      title="User Management"
+      open={sidebarOpen}
+      setOpen={setSidebarOpen}
+    >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -179,7 +230,11 @@ export default function Staff() {
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
             <Typography variant="h4">User Management</Typography>
             {currentUserRole === "admin" && (
-              <Button variant="contained" color="primary" onClick={() => handleOpenDialog()}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => handleOpenDialog()}
+              >
                 + Create User
               </Button>
             )}
@@ -212,7 +267,16 @@ export default function Staff() {
             <Table>
               <TableHead>
                 <TableRow>
-                  {["First Name", "Last Name", "Email", "Phone", "Birthdate", "Address", "Role", "Action"].map((header) => (
+                  {[
+                    "First Name",
+                    "Last Name",
+                    "Email",
+                    "Phone",
+                    "Birthdate",
+                    "Address",
+                    "Role",
+                    "Action",
+                  ].map((header) => (
                     <TableCell
                       key={header}
                       align="center"
@@ -234,14 +298,36 @@ export default function Staff() {
                     <TableCell align="center">{user.address}</TableCell>
                     <TableCell align="center">
                       {user.role === "admin" ? (
-                        <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                          <AdminPanelSettings color="primary" />
-                          <Typography variant="body2" fontWeight="bold">Admin</Typography>
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          gap={1}
+                        >
+                          <AdminPanelSettings sx={{ color: "blue" }} />
+                          <Typography
+                            variant="body2"
+                            fontWeight="bold"
+                            sx={{ color: "blue" }}
+                          >
+                            Admin
+                          </Typography>
                         </Box>
                       ) : (
-                        <Box display="flex" alignItems="center" justifyContent="center" gap={1}>
-                          <People color="action" />
-                          <Typography variant="body2" fontWeight="bold">Staff</Typography>
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          gap={1}
+                        >
+                          <People sx={{ color: "green" }} />
+                          <Typography
+                            variant="body2"
+                            fontWeight="bold"
+                            sx={{ color: "green" }}
+                          >
+                            Staff
+                          </Typography>
                         </Box>
                       )}
                     </TableCell>

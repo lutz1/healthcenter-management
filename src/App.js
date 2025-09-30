@@ -1,14 +1,16 @@
 // src/App.jsx
 import React from "react";
 import { ThemeProvider } from "@mui/material/styles";
-import { HashRouter, Routes, Route, Navigate } from "react-router-dom"; // ✅ use HashRouter
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import theme from "./theme";
 
+// Dashboards
 import AdminDashboard from "./modules/AdminDashboard";
 import StaffDashboard from "./modules/StaffDashboard";
 import SAdminDashboard from "./modules/SAdminDashboard";
 import Login from "./modules/Login";
 
+// Admin Pages
 import Staff from "./pages/Staff";
 import Patients from "./pages/Patients";
 import Events from "./pages/Events";
@@ -19,17 +21,22 @@ import LogsHistory from "./pages/LogsHistory";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 
+// Auth Context
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
-const ProtectedRoute = ({ children, requiredRole, requireRobert }) => {
+const LoadingScreen = () => (
+  <div style={{ textAlign: "center", marginTop: "50px" }}>Loading...</div>
+);
+
+const ProtectedRoute = ({ children, requiredRole }) => {
   const { user, role, loading } = useAuth();
-  if (loading) return <div style={{ textAlign: "center", marginTop: "50px" }}>Loading...</div>;
+
+  if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
 
-  if (requiredRole && role !== requiredRole) return <Navigate to="/login" replace />;
-
-  if (requireRobert && user.email !== "robert.llemit@gmail.com") {
-    return <Navigate to="/login" replace />;
+  // 🔒 Role check
+  if (requiredRole && role !== requiredRole) {
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -37,19 +44,14 @@ const ProtectedRoute = ({ children, requiredRole, requireRobert }) => {
 
 const AutoRedirect = () => {
   const { user, role, loading } = useAuth();
-  if (loading) return <div style={{ textAlign: "center", marginTop: "50px" }}>Loading...</div>;
+
+  if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
 
-  if (role === "admin") {
-    if (user.email === "robert.llemit@gmail.com") {
-      return <Navigate to="/superadmin" replace />;
-    }
-    return <Navigate to="/admin" replace />;
-  }
-
-  if (role === "staff") {
-    return <Navigate to="/staff" replace />;
-  }
+  // 🔑 Redirect by role
+  if (role === "superadmin") return <Navigate to="/superadmin" replace />;
+  if (role === "admin") return <Navigate to="/admin" replace />;
+  if (role === "staff") return <Navigate to="/staff" replace />;
 
   return <Navigate to="/login" replace />;
 };
@@ -58,16 +60,19 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <AuthProvider>
-        <HashRouter> {/* ✅ replaced BrowserRouter with HashRouter */}
+        <HashRouter>
           <Routes>
+            {/* Public route */}
             <Route path="/login" element={<Login />} />
+
+            {/* Auto redirect by role */}
             <Route path="/" element={<AutoRedirect />} />
 
-            {/* Robert’s special Admin (SAdmin) */}
+            {/* Superadmin routes */}
             <Route
               path="/superadmin"
               element={
-                <ProtectedRoute requiredRole="admin" requireRobert>
+                <ProtectedRoute requiredRole="superadmin">
                   <SAdminDashboard />
                 </ProtectedRoute>
               }
@@ -84,47 +89,88 @@ function App() {
             />
             <Route
               path="/management/staff"
-              element={<ProtectedRoute requiredRole="admin"><Staff /></ProtectedRoute>}
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Staff />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/management/patients"
-              element={<ProtectedRoute requiredRole="admin"><Patients /></ProtectedRoute>}
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Patients />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/management/events"
-              element={<ProtectedRoute requiredRole="admin"><Events /></ProtectedRoute>}
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Events />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/records/medical-records"
-              element={<ProtectedRoute requiredRole="admin"><MedicalRecords /></ProtectedRoute>}
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <MedicalRecords />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/records/services"
-              element={<ProtectedRoute requiredRole="admin"><Services /></ProtectedRoute>}
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Services />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/records/inventory"
-              element={<ProtectedRoute requiredRole="admin"><Inventory /></ProtectedRoute>}
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Inventory />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/records/logs-history"
-              element={<ProtectedRoute requiredRole="admin"><LogsHistory /></ProtectedRoute>}
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <LogsHistory />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/analytics/reports"
-              element={<ProtectedRoute requiredRole="admin"><Reports /></ProtectedRoute>}
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Reports />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/settings"
-              element={<ProtectedRoute requiredRole="admin"><Settings /></ProtectedRoute>}
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <Settings />
+                </ProtectedRoute>
+              }
             />
 
             {/* Staff routes */}
             <Route
               path="/staff"
-              element={<ProtectedRoute requiredRole="staff"><StaffDashboard /></ProtectedRoute>}
+              element={
+                <ProtectedRoute requiredRole="staff">
+                  <StaffDashboard />
+                </ProtectedRoute>
+              }
             />
 
+            {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </HashRouter>

@@ -11,18 +11,18 @@ export const AuthProvider = ({ children }) => {
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Helper: fetch role from Firestore
+  // 🔹 Fetch role from Firestore users/{uid}
   const fetchUserRole = async (uid) => {
     try {
-      const userDoc = await getDoc(doc(db, "users", uid));
-      if (userDoc.exists()) {
-        return userDoc.data().role || "staff";
-      } else {
-        console.warn("⚠️ User doc not found in Firestore → defaulting to staff");
-        return "staff";
+      const ref = doc(db, "users", uid);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        return snap.data().role || "staff"; // default fallback
       }
+      console.warn("⚠️ User doc missing in Firestore → defaulting to staff");
+      return "staff";
     } catch (err) {
-      console.error("❌ Error fetching user role:", err);
+      console.error("❌ Error fetching role:", err);
       return "staff";
     }
   };
@@ -44,16 +44,8 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  // 🔹 Allow manual role refresh (useful after promoting user to admin)
-  const refreshUserRole = async () => {
-    if (user) {
-      const fetchedRole = await fetchUserRole(user.uid);
-      setRole(fetchedRole);
-    }
-  };
-
   return (
-    <AuthContext.Provider value={{ user, role, loading, refreshUserRole }}>
+    <AuthContext.Provider value={{ user, role, loading }}>
       {children}
     </AuthContext.Provider>
   );

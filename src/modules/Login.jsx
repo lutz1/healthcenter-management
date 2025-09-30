@@ -10,14 +10,12 @@ import {
   CircularProgress,
   GlobalStyles,
 } from "@mui/material";
-import { auth, db } from "../firebase";
+import { auth } from "../firebase";
 import {
   signInWithEmailAndPassword,
   setPersistence,
-  browserLocalPersistence, // ✅ Added
+  browserLocalPersistence,
 } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
 
 import bgImage from "../assets/bg2.png";
 import logo from "../assets/log.png";
@@ -29,7 +27,6 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [fadeIn, setFadeIn] = useState(false);
 
-  const navigate = useNavigate();
   useEffect(() => setFadeIn(true), []);
 
   const handleLogin = async (e) => {
@@ -38,37 +35,17 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // ✅ Ensure session persists even after refresh
+      // 🔑 Persist session across refreshes
       await setPersistence(auth, browserLocalPersistence);
 
+      // ✅ Just sign in
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // ✅ Debug: log the authenticated user + ID token
       console.log("🔑 Logged in user:", user);
-      const token = await user.getIdToken();
-      console.log("✅ ID Token:", token);
 
-      // ✅ Get Firestore role
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (userDoc.exists()) {
-        const role = userDoc.data().role;
-
-        // Redirect logic
-        if (role === "admin") {
-          if (user.email === "robert.llemit@gmail.com") {
-            navigate("/superadmin");
-          } else {
-            navigate("/admin");
-          }
-        } else if (role === "staff") {
-          navigate("/staff");
-        } else {
-          setError("Role not assigned. Please contact administrator.");
-        }
-      } else {
-        setError("No user profile found in database.");
-      }
+      // ❌ Removed redirect logic
+      // AuthContext + App.jsx (AutoRedirect) will handle navigation based on role
     } catch (err) {
       console.error("❌ Login error:", err);
       setError("Invalid email or password. Please try again.");
