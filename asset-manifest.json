@@ -1,18 +1,18 @@
 {
   "files": {
     "main.css": "/healthcenter-management/static/css/main.323d7611.css",
-    "main.js": "/healthcenter-management/static/js/main.d4c52c0f.js",
+    "main.js": "/healthcenter-management/static/js/main.4e3f5991.js",
     "static/js/453.a08f1f75.chunk.js": "/healthcenter-management/static/js/453.a08f1f75.chunk.js",
     "static/media/bg2.png": "/healthcenter-management/static/media/bg2.97ea778bb7b47c9ebf72.png",
     "static/media/bg1.png": "/healthcenter-management/static/media/bg1.08acc719862c34e2d2e3.png",
     "static/media/log.png": "/healthcenter-management/static/media/log.3613a0cceaf98716264f.png",
     "index.html": "/healthcenter-management/index.html",
     "main.323d7611.css.map": "/healthcenter-management/static/css/main.323d7611.css.map",
-    "main.d4c52c0f.js.map": "/healthcenter-management/static/js/main.d4c52c0f.js.map",
+    "main.4e3f5991.js.map": "/healthcenter-management/static/js/main.4e3f5991.js.map",
     "453.a08f1f75.chunk.js.map": "/healthcenter-management/static/js/453.a08f1f75.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.323d7611.css",
-    "static/js/main.d4c52c0f.js"
+    "static/js/main.4e3f5991.js"
   ]
 }
