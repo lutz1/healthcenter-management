@@ -1,4 +1,3 @@
-// src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
@@ -7,36 +6,35 @@ import { doc, getDoc } from "firebase/firestore";
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Fetch role from Firestore users/{uid}
-  const fetchUserRole = async (uid) => {
+  const fetchUserData = async (uid) => {
     try {
-      const ref = doc(db, "users", uid);
-      const snap = await getDoc(ref);
+      const snap = await getDoc(doc(db, "users", uid));
       if (snap.exists()) {
-        return snap.data().role || "staff"; // default fallback
+        const data = snap.data();
+        console.log("fetchUserData:", uid, data);
+        return { ...data, uid }; // merge uid
+      } else {
+        console.warn("No Firestore doc for uid", uid);
+        return null;
       }
-      console.warn("⚠️ User doc missing in Firestore → defaulting to staff");
-      return "staff";
     } catch (err) {
-      console.error("❌ Error fetching role:", err);
-      return "staff";
+      console.error("fetchUserData error:", err);
+      return null;
     }
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setLoading(true);
-      if (currentUser) {
-        setUser(currentUser);
-        const fetchedRole = await fetchUserRole(currentUser.uid);
-        setRole(fetchedRole);
+      if (user) {
+        console.log("onAuthStateChanged - user:", user.uid, user.email);
+        const userData = await fetchUserData(user.uid);
+        setCurrentUser(userData ? { ...user, role: userData.role || "staff" } : null);
       } else {
-        setUser(null);
-        setRole(null);
+        setCurrentUser(null);
       }
       setLoading(false);
     });
@@ -45,7 +43,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, role, loading }}>
+    <AuthContext.Provider value={{ currentUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

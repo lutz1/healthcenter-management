@@ -1,7 +1,7 @@
-// src/App.jsx
 import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
-import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Box } from "@mui/material";
 import theme from "./theme";
 
 // Dashboards
@@ -21,159 +21,160 @@ import LogsHistory from "./pages/LogsHistory";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 
-// Auth Context
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
+// ✅ Loading Screen
 const LoadingScreen = () => (
-  <div style={{ textAlign: "center", marginTop: "50px" }}>Loading...</div>
+  <Box sx={{ textAlign: "center", mt: 20 }}>⏳ Loading...</Box>
 );
 
-const ProtectedRoute = ({ children, requiredRole }) => {
-  const { user, role, loading } = useAuth();
+// 🔒 Private Route wrapper
+const PrivateRoute = ({ children, requiredRole }) => {
+  const { currentUser, loading } = useAuth();
 
   if (loading) return <LoadingScreen />;
-  if (!user) return <Navigate to="/login" replace />;
-
-  // 🔒 Role check
-  if (requiredRole && role !== requiredRole) {
-    return <Navigate to="/" replace />;
-  }
+  if (!currentUser) return <Navigate to="/login" replace />;
+  if (requiredRole && currentUser.role !== requiredRole) return <Navigate to="/not-authorized" replace />;
 
   return children;
 };
 
-const AutoRedirect = () => {
-  const { user, role, loading } = useAuth();
+// 🔑 Login route wrapper
+const LoginRoute = () => {
+  const { currentUser, loading } = useAuth();
 
   if (loading) return <LoadingScreen />;
-  if (!user) return <Navigate to="/login" replace />;
+  if (currentUser?.role) return <Navigate to={`/${currentUser.role}`} replace />;
 
-  // 🔑 Redirect by role
-  if (role === "superadmin") return <Navigate to="/superadmin" replace />;
-  if (role === "admin") return <Navigate to="/admin" replace />;
-  if (role === "staff") return <Navigate to="/staff" replace />;
+  return <Login />;
+};
 
-  return <Navigate to="/login" replace />;
+// 🔑 Auto redirect after login
+const AutoRedirect = () => {
+  const { currentUser, loading } = useAuth();
+
+  if (loading) return <LoadingScreen />;
+  if (!currentUser?.role) return <Navigate to="/login" replace />;
+
+  return <Navigate to={`/${currentUser.role}`} replace />;
 };
 
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <AuthProvider>
-        <HashRouter>
+        <Router>
           <Routes>
-            {/* Public route */}
-            <Route path="/login" element={<Login />} />
-
-            {/* Auto redirect by role */}
+            {/* Public */}
+            <Route path="/login" element={<LoginRoute />} />
             <Route path="/" element={<AutoRedirect />} />
 
-            {/* Superadmin routes */}
+            {/* Superadmin */}
             <Route
               path="/superadmin"
               element={
-                <ProtectedRoute requiredRole="superadmin">
+                <PrivateRoute requiredRole="superadmin">
                   <SAdminDashboard />
-                </ProtectedRoute>
+                </PrivateRoute>
               }
             />
 
-            {/* Admin routes */}
+            {/* Admin */}
             <Route
               path="/admin"
               element={
-                <ProtectedRoute requiredRole="admin">
+                <PrivateRoute requiredRole="admin">
                   <AdminDashboard />
-                </ProtectedRoute>
+                </PrivateRoute>
               }
             />
             <Route
               path="/management/staff"
               element={
-                <ProtectedRoute requiredRole="admin">
+                <PrivateRoute requiredRole="admin">
                   <Staff />
-                </ProtectedRoute>
+                </PrivateRoute>
               }
             />
             <Route
               path="/management/patients"
               element={
-                <ProtectedRoute requiredRole="admin">
+                <PrivateRoute requiredRole="admin">
                   <Patients />
-                </ProtectedRoute>
+                </PrivateRoute>
               }
             />
             <Route
               path="/management/events"
               element={
-                <ProtectedRoute requiredRole="admin">
+                <PrivateRoute requiredRole="admin">
                   <Events />
-                </ProtectedRoute>
+                </PrivateRoute>
               }
             />
             <Route
               path="/records/medical-records"
               element={
-                <ProtectedRoute requiredRole="admin">
+                <PrivateRoute requiredRole="admin">
                   <MedicalRecords />
-                </ProtectedRoute>
+                </PrivateRoute>
               }
             />
             <Route
               path="/records/services"
               element={
-                <ProtectedRoute requiredRole="admin">
+                <PrivateRoute requiredRole="admin">
                   <Services />
-                </ProtectedRoute>
+                </PrivateRoute>
               }
             />
             <Route
               path="/records/inventory"
               element={
-                <ProtectedRoute requiredRole="admin">
+                <PrivateRoute requiredRole="admin">
                   <Inventory />
-                </ProtectedRoute>
+                </PrivateRoute>
               }
             />
             <Route
               path="/records/logs-history"
               element={
-                <ProtectedRoute requiredRole="admin">
+                <PrivateRoute requiredRole="admin">
                   <LogsHistory />
-                </ProtectedRoute>
+                </PrivateRoute>
               }
             />
             <Route
               path="/analytics/reports"
               element={
-                <ProtectedRoute requiredRole="admin">
+                <PrivateRoute requiredRole="admin">
                   <Reports />
-                </ProtectedRoute>
+                </PrivateRoute>
               }
             />
             <Route
               path="/settings"
               element={
-                <ProtectedRoute requiredRole="admin">
+                <PrivateRoute requiredRole="admin">
                   <Settings />
-                </ProtectedRoute>
+                </PrivateRoute>
               }
             />
 
-            {/* Staff routes */}
+            {/* Staff */}
             <Route
               path="/staff"
               element={
-                <ProtectedRoute requiredRole="staff">
+                <PrivateRoute requiredRole="staff">
                   <StaffDashboard />
-                </ProtectedRoute>
+                </PrivateRoute>
               }
             />
 
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </HashRouter>
+        </Router>
       </AuthProvider>
     </ThemeProvider>
   );
